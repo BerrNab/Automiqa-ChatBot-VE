@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Your Trial Has Expired - Service Suspended</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #6B7280 0%, #374151 100%);
+            color: #ffffff;
+            text-align: center;
+            padding: 40px 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .email-content {
+            padding: 40px 30px;
+        }
+        
+        .alert-suspended {
+            background-color: #FEE2E2;
+            border: 2px solid #EF4444;
+            color: #991B1B;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .alert-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.8;
+        }
+        
+        .alert-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .alert-text {
+            font-size: 16px;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 20px;
+        }
+        
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .main-text {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .suspended-notice {
+            background-color: #F3F4F6;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .suspended-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .suspended-icon {
+            font-size: 24px;
+        }
+        
+        .restoration-benefits {
+            background-color: #F0FDF4;
+            border: 1px solid #10B981;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 30px 0;
+        }
+        
+        .benefits-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #065F46;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .benefits-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+            color: #065F46;
+        }
+        
+        .benefits-list li:before {
+            content: "🔄";
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .cta-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 18px 36px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.5);
+        }
+        
+        .data-preservation {
+            background-color: #EFF6FF;
+            border: 1px solid #3B82F6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        
+        .data-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1E40AF;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .data-text {
+            font-size: 14px;
+            color: #1E40AF;
+            margin: 0;
+        }
+        
+        .email-footer {
+            background-color: #F9FAFB;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #E5E7EB;
+        }
+        
+        .footer-content {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+        
+        .footer-content a {
+            color: #10B981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .footer-content a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .email-header {
+                padding: 30px 20px;
+            }
+            
+            .email-content {
+                padding: 30px 20px;
+            }
+            
+            .email-footer {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .cta-button {
+                padding: 16px 32px;
+                font-size: 15px;
+            }
+            
+            .restoration-benefits {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="logo">{{companyName}}</div>
+            <div class="tagline">AI-Powered Customer Engagement</div>
+        </div>
+        
+        <div class="email-content">
+            <div class="alert-suspended">
+                <div class="alert-icon">⛔</div>
+                <div class="alert-title">Service Suspended</div>
+                <p class="alert-text">Your chatbot has been deactivated</p>
+            </div>
+            
+            <h1>Your Trial Has Expired</h1>
+            
+            <p class="greeting">Hi {{clientName}},</p>
+            
+            <p class="main-text">Your chatbot trial has expired and your service has been suspended. To reactivate your chatbot and restore service to your customers, please upgrade to a paid plan.</p>
+            
+            <div class="suspended-notice">
+                <div class="suspended-title">
+                    <span class="suspended-icon">🚫</span>
+                    <span>Current Status: Service Suspended</span>
+                </div>
+                <p>Your customers can no longer interact with your chatbot</p>
+            </div>
+            
+            <div class="data-preservation">
+                <div class="data-title">
+                    <span>💾</span>
+                    <span>Your Data is Safe</span>
+                </div>
+                <p class="data-text">All your conversation history, settings, and configurations are preserved for 30 days. You can reactivate anytime without losing any data.</p>
+            </div>
+            
+            <div class="restoration-benefits">
+                <div class="benefits-title">
+                    <span>🚀</span>
+                    <span>Reactivate to restore:</span>
+                </div>
+                <ul class="benefits-list">
+                    <li>Your chatbot functionality</li>
+                    <li>Customer interaction capabilities</li>
+                    <li>Lead capture and analytics</li>
+                    <li>Full platform access</li>
+                    <li>24/7 technical support</li>
+                    <li>All your conversation history</li>
+                </ul>
+            </div>
+            
+            <div class="cta-container">
+                <a href="{{loginUrl}}" class="cta-button">Reactivate Service Now</a>
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <div class="footer-content">
+                <p><strong>Ready to reactivate?</strong> Choose a plan that fits your needs.</p>
+                <p>Questions? Contact us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
+                
+                <p style="margin-top: 20px; font-size: 12px; color: #9CA3AF;">
+                    &copy; 2025 {{companyName}}. All rights reserved.<br>
+                    Your trial has expired. Reactivate anytime to restore service.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

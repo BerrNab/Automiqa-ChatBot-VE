@@ -1,0 +1,6 @@
+# Ignore all files
+*
+# Except for configuration files
+!.eslintrc.json
+!package.json
+!tsconfig.json

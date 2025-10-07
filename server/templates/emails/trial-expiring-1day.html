@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Your Trial Expires Tomorrow - Final Notice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #EF4444 0%, #991B1B 100%);
+            color: #ffffff;
+            text-align: center;
+            padding: 40px 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .email-content {
+            padding: 40px 30px;
+        }
+        
+        .alert-critical {
+            background-color: #FEE2E2;
+            border: 3px solid #EF4444;
+            color: #991B1B;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .alert-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .alert-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .alert-text {
+            font-size: 16px;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: #EF4444;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .main-text {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .final-warning {
+            background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+            border: 2px solid #EF4444;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .final-warning::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #EF4444, #F59E0B, #EF4444);
+            z-index: -1;
+            border-radius: 10px;
+        }
+        
+        .warning-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: #EF4444;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .countdown-final {
+            font-size: 64px;
+            font-weight: 900;
+            color: #EF4444;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .countdown-label {
+            font-size: 18px;
+            color: #991B1B;
+            font-weight: 700;
+        }
+        
+        .cta-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #EF4444 0%, #991B1B 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 20px 40px;
+            border-radius: 8px;
+            font-weight: 900;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.7); }
+            100% { box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5); }
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(239, 68, 68, 0.6);
+        }
+        
+        .consequences {
+            background-color: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        
+        .consequences-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #92400E;
+            margin-bottom: 12px;
+        }
+        
+        .consequences-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .consequences-list li {
+            padding: 6px 0;
+            color: #92400E;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .consequences-list li:before {
+            content: "⚠";
+            color: #F59E0B;
+            font-size: 16px;
+        }
+        
+        .email-footer {
+            background-color: #F9FAFB;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #E5E7EB;
+        }
+        
+        .footer-content {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+        
+        .footer-content a {
+            color: #EF4444;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .footer-content a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .email-header {
+                padding: 30px 20px;
+            }
+            
+            .email-content {
+                padding: 30px 20px;
+            }
+            
+            .email-footer {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .cta-button {
+                padding: 18px 36px;
+                font-size: 16px;
+            }
+            
+            .countdown-final {
+                font-size: 48px;
+            }
+            
+            .final-warning {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="logo">{{companyName}}</div>
+            <div class="tagline">AI-Powered Customer Engagement</div>
+        </div>
+        
+        <div class="email-content">
+            <div class="alert-critical">
+                <div class="alert-icon">🚨</div>
+                <div class="alert-title">FINAL NOTICE</div>
+                <p class="alert-text">Your trial expires tomorrow on {{trialEndDate}}</p>
+            </div>
+            
+            <h1>Trial Expires Tomorrow!</h1>
+            
+            <p class="greeting">Hi {{clientName}},</p>
+            
+            <p class="main-text">Your chatbot trial expires <strong>tomorrow</strong> on {{trialEndDate}}. This is your <strong>final reminder</strong> to upgrade and maintain uninterrupted service for your customers.</p>
+            
+            <div class="final-warning">
+                <div class="warning-title">
+                    <span>⏰</span>
+                    <span>LAST CHANCE!</span>
+                    <span>⏰</span>
+                </div>
+                <div class="countdown-final">24</div>
+                <div class="countdown-label">Hours Remaining</div>
+            </div>
+            
+            <div class="consequences">
+                <div class="consequences-title">What happens after expiration:</div>
+                <ul class="consequences-list">
+                    <li>Your chatbot will be immediately deactivated</li>
+                    <li>Customers won't be able to get support through your website</li>
+                    <li>All conversation data will be preserved for 30 days</li>
+                    <li>You can reactivate anytime by upgrading</li>
+                </ul>
+            </div>
+            
+            <div class="cta-container">
+                <a href="{{loginUrl}}" class="cta-button">UPGRADE NOW - FINAL HOURS!</a>
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <div class="footer-content">
+                <p><strong>EMERGENCY SUPPORT:</strong> Contact us immediately if you need help!</p>
+                <p>Email: <a href="mailto:{{supportEmail}}">{{supportEmail}}</a> | Call: 1-800-SUPPORT</p>
+                
+                <p style="margin-top: 20px; font-size: 12px; color: #9CA3AF;">
+                    &copy; 2025 {{companyName}}. All rights reserved.<br>
+                    This is your final notification about your expiring trial.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

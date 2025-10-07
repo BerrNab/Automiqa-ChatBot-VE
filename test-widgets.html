@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Mode Testing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .widget-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #3B82F6;
+            margin-top: 0;
+        }
+        .embed-code {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 15px 0;
+        }
+        .test-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .iframe-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        iframe {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chat Widget Testing - Both Modes</h1>
+        <p class="description">
+            This page demonstrates both the floating and fullpage widget modes. 
+            The widget system now supports two display modes that can be embedded on any website.
+        </p>
+
+        <div class="test-info">
+            <strong>Note:</strong> These examples use a test chatbot ID. Replace 'test-chatbot-123' with an actual chatbot ID from your database.
+            <br>To test with a real chatbot, create one in the admin dashboard first.
+        </div>
+
+        <!-- Floating Widget Section -->
+        <div class="widget-section">
+            <h2>1. Floating Widget Mode</h2>
+            <p>
+                The floating widget appears as a chat bubble in the bottom-right corner of the page. 
+                Users can click to open the chat interface.
+            </p>
+            
+            <h3>Embed Code for Floating Widget:</h3>
+            <div class="embed-code">&lt;!-- Floating Chat Widget --&gt;
+&lt;script&gt;
+  (function() {
+    var container = document.createElement('div');
+    container.id = 'chatbot-widget';
+    container.style.position = 'fixed';
+    container.style.zIndex = '9999';
+    container.style.bottom = '20px';
+    container.style.right = '20px';
+    
+    var iframe = document.createElement('iframe');
+    iframe.src = 'http://localhost:5000/widget/YOUR_CHATBOT_ID';
+    iframe.style.width = '450px';
+    iframe.style.height = '700px';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '16px';
+    iframe.style.boxShadow = '0 10px 40px rgba(0,0,0,0.15)';
+    
+    container.appendChild(iframe);
+    document.body.appendChild(container);
+  })();
+&lt;/script&gt;</div>
+
+            <h3>Direct Link:</h3>
+            <p><a href="/widget/test-chatbot-123" target="_blank">Open Floating Widget →</a></p>
+        </div>
+
+        <!-- Fullpage Widget Section -->
+        <div class="widget-section">
+            <h2>2. Fullpage Widget Mode</h2>
+            <p>
+                The fullpage widget displays the chat interface directly in your page content. 
+                Perfect for dedicated support pages or embedded chat sections.
+            </p>
+            
+            <h3>Embed Code for Fullpage Widget:</h3>
+            <div class="embed-code">&lt;!-- Fullpage Chat Widget --&gt;
+&lt;iframe 
+  src="http://localhost:5000/widget/YOUR_CHATBOT_ID/fullpage"
+  style="width: 100%; height: 600px; border: none; border-radius: 8px;"
+  title="Chat Support"
+  allowfullscreen&gt;
+&lt;/iframe&gt;</div>
+
+            <h3>Live Preview:</h3>
+            <div class="iframe-container">
+                <iframe 
+                    src="/widget/test-chatbot-123/fullpage"
+                    style="width: 100%; height: 600px; border: none;"
+                    title="Chat Support Demo">
+                </iframe>
+            </div>
+
+            <h3>Direct Link:</h3>
+            <p><a href="/widget/test-chatbot-123/fullpage" target="_blank">Open Fullpage Widget →</a></p>
+        </div>
+
+        <!-- API Endpoints Section -->
+        <div class="widget-section">
+            <h2>3. API Endpoints</h2>
+            <p>The following endpoints are available for widget integration:</p>
+            
+            <h3>Get Embed Code:</h3>
+            <div class="embed-code">GET /api/widget/{chatbotId}/embed-code?mode=floating
+GET /api/widget/{chatbotId}/embed-code?mode=fullpage</div>
+
+            <h3>Widget URLs:</h3>
+            <div class="embed-code">Floating: /widget/{chatbotId}
+Fullpage: /widget/{chatbotId}/fullpage</div>
+
+            <h3>Message API:</h3>
+            <div class="embed-code">POST /api/widget/{chatbotId}/message
+Body: { "message": "user message", "sessionId": "unique-session-id" }</div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="widget-section">
+            <h2>4. Shared Features</h2>
+            <ul>
+                <li>✅ Custom branding (colors, logo, company name)</li>
+                <li>✅ Business hours detection with offline messages</li>
+                <li>✅ Suggested prompts for quick questions</li>
+                <li>✅ Typing indicators and message timestamps</li>
+                <li>✅ Responsive design for all screen sizes</li>
+                <li>✅ Session persistence for conversation history</li>
+                <li>✅ OpenAI integration for intelligent responses</li>
+                <li>✅ MCP tools integration (when enabled)</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

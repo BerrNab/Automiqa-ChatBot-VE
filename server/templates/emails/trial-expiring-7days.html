@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Your Trial Expires in 7 Days</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: #ffffff;
+            text-align: center;
+            padding: 40px 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .email-content {
+            padding: 40px 30px;
+        }
+        
+        .alert-warning {
+            background-color: #FEF3C7;
+            border: 2px solid #F59E0B;
+            color: #92400E;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .alert-text {
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 20px;
+        }
+        
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .main-text {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .benefits {
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 30px 0;
+        }
+        
+        .benefits-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .benefits-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+        }
+        
+        .benefits-list li:before {
+            content: "✓";
+            background-color: #10B981;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .cta-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .secondary-text {
+            font-size: 14px;
+            color: #6B7280;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .email-footer {
+            background-color: #F9FAFB;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #E5E7EB;
+        }
+        
+        .footer-content {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+        
+        .footer-content a {
+            color: #3B82F6;
+            text-decoration: none;
+        }
+        
+        .footer-content a:hover {
+            text-decoration: underline;
+        }
+        
+        .social-links {
+            margin: 20px 0 10px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 8px;
+            color: #6B7280;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        /* Mobile responsiveness */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .email-header {
+                padding: 30px 20px;
+            }
+            
+            .email-content {
+                padding: 30px 20px;
+            }
+            
+            .email-footer {
+                padding: 20px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .cta-button {
+                padding: 14px 28px;
+                font-size: 15px;
+            }
+            
+            .benefits {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="logo">{{companyName}}</div>
+            <div class="tagline">AI-Powered Customer Engagement</div>
+        </div>
+        
+        <div class="email-content">
+            <div class="alert-warning">
+                <div class="alert-icon">⏰</div>
+                <div class="alert-content">
+                    <div class="alert-title">Action Required</div>
+                    <p class="alert-text">Your trial expires on {{trialEndDate}}</p>
+                </div>
+            </div>
+            
+            <h1>Your Trial Expires in 7 Days</h1>
+            
+            <p class="greeting">Hi {{clientName}},</p>
+            
+            <p class="main-text">Your chatbot trial will expire in <strong>7 days</strong> on {{trialEndDate}}. To ensure uninterrupted service for your customers, please upgrade to a paid plan today.</p>
+            
+            <div class="benefits">
+                <div class="benefits-title">
+                    <span>🚀</span>
+                    <span>Don't miss out on these powerful features:</span>
+                </div>
+                <ul class="benefits-list">
+                    <li>24/7 premium customer support</li>
+                    <li>Advanced analytics and conversation insights</li>
+                    <li>Custom branding and white-label options</li>
+                    <li>Priority response times and reliability</li>
+                    <li>Unlimited conversation history</li>
+                    <li>Advanced AI training and customization</li>
+                </ul>
+            </div>
+            
+            <div class="cta-container">
+                <a href="{{loginUrl}}" class="cta-button">Upgrade Now & Save Your Data</a>
+            </div>
+            
+            <p class="secondary-text">
+                Upgrade now to avoid losing your conversation history and maintain seamless customer support.
+            </p>
+        </div>
+        
+        <div class="email-footer">
+            <div class="footer-content">
+                <p>Need help choosing the right plan? Our team is here to help!</p>
+                <p>Contact us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a> or reply to this email.</p>
+                
+                <div class="social-links">
+                    <a href="{{loginUrl}}">Dashboard</a> |
+                    <a href="{{loginUrl}}/billing">Billing</a> |
+                    <a href="mailto:{{supportEmail}}">Support</a>
+                </div>
+                
+                <p style="margin-top: 20px; font-size: 12px; color: #9CA3AF;">
+                    &copy; 2025 {{companyName}}. All rights reserved.<br>
+                    You're receiving this because your trial is expiring soon.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
