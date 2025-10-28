@@ -38,14 +38,16 @@ router.get("/widget/:chatbotId", async (req, res) => {
     // Apply URL parameter overrides for language settings
     const { lang, adaptLang } = req.query;
     if (lang && typeof lang === 'string') {
-      chatbot.config = chatbot.config || {};
-      chatbot.config.behavior = chatbot.config.behavior || {};
-      chatbot.config.behavior.mainLanguage = lang;
+      const config = chatbot.config as any || {};
+      config.behavior = config.behavior || {};
+      config.behavior.mainLanguage = lang;
+      chatbot.config = config;
     }
     if (adaptLang !== undefined) {
-      chatbot.config = chatbot.config || {};
-      chatbot.config.behavior = chatbot.config.behavior || {};
-      chatbot.config.behavior.adaptToCustomerLanguage = adaptLang === 'true' || adaptLang === '1';
+      const config = chatbot.config as any || {};
+      config.behavior = config.behavior || {};
+      config.behavior.adaptToCustomerLanguage = adaptLang === 'true' || adaptLang === '1';
+      chatbot.config = config;
     }
     
     console.log(`Found chatbot: ${chatbot.id} (${chatbot.name})`);
