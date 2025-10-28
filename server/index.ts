@@ -54,10 +54,8 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  // Create HTTP server
-  const server = createServer(app);
-
+// Setup app function for both local and serverless
+export async function setupApp() {
   // Configure authentication and session middleware first
   configureAuth(app);
 
@@ -72,13 +70,6 @@ app.use((req, res, next) => {
   app.use("/api", clientDashboardRoutes);
   app.use("/api", knowledgeBaseRoutes);
   app.use("/api/email-notifications", emailNotificationRoutes);
-  
-  // Setup Vite or static file serving after API routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
 
   // Error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -89,12 +80,34 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = config.port;
-  server.listen(port, "127.0.0.1", () => {
-    log(`serving on http://localhost:${port}`);
-  });
-})();
+  return app;
+}
+
+// Export app for Vercel
+export { app };
+
+// Only run server if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+  (async () => {
+    // Create HTTP server
+    const server = createServer(app);
+
+    await setupApp();
+    
+    // Setup Vite or static file serving after API routes
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    // ALWAYS serve the app on the port specified in the environment variable PORT
+    // Other ports are firewalled. Default to 5000 if not specified.
+    // this serves both the API and the client.
+    // It is the only port that is not firewalled.
+    const port = config.port;
+    server.listen(port, "127.0.0.1", () => {
+      log(`serving on http://localhost:${port}`);
+    });
+  })();
+}
