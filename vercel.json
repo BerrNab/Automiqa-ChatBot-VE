@@ -1,17 +1,7 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "vite build",
   "outputDirectory": "dist/public",
   "framework": null,
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api"
-    }
-  ],
-  "functions": {
-    "api/index.ts": {
-      "runtime": "@vercel/node@3.0.0"
-    }
-  }
+  "installCommand": "npm install",
+  "devCommand": "npm run dev"
 }
