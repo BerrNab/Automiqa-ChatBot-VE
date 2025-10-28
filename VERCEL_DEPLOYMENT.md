@@ -1,6 +1,28 @@
 # Vercel Deployment Guide
 
-## Prerequisites
+## ⚠️ IMPORTANT WARNING
+
+**Vercel is NOT recommended for this application.** This is a full-stack Express.js application with:
+- Persistent sessions
+- WebSocket support
+- Long-running processes
+- Complex middleware chains
+
+Vercel is designed for:
+- Static sites
+- Serverless functions (short-lived, stateless)
+- Next.js applications
+
+### Recommended Alternatives:
+1. **Railway** - Best for full-stack Node.js apps (easiest deployment)
+2. **Render** - Great for Express apps with free tier
+3. **DigitalOcean App Platform** - Reliable and affordable
+4. **Fly.io** - Good for containerized apps
+5. **AWS ECS/Fargate** - For production scale
+
+## If You Still Want to Try Vercel (Limited Functionality)
+
+### Prerequisites
 - Vercel account
 - GitHub repository connected to Vercel
 - Supabase project (for database)

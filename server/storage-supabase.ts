@@ -424,6 +424,8 @@ export class SupabaseStorage implements IStorage {
         ? Math.round((uniqueConversationsWithResponses / totalConversations) * 100)
         : 0;
       
+      console.log(`[Stats] Chatbot ${chatbot.id}: messages=${messageCount}, conversations=${totalConversations}, withResponses=${uniqueConversationsWithResponses}, rate=${responseRate}%`);
+      
       result.push({
         ...chatbot,
         client: chatbot.client,

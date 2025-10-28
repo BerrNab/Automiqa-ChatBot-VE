@@ -11,6 +11,7 @@ import ClientLogin from "@/pages/client-login";
 import ClientDashboard from "@/pages/client-dashboard";
 import WidgetEmbed from "@/pages/widget-embed";
 import WidgetFullpage from "@/pages/widget-fullpage";
+import ChatbotAnalytics from "@/pages/ChatbotAnalytics";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/admin/login">{() => <AdminLogin />}</Route>
       <Route path="/admin">{() => <AdminDashboard />}</Route>
       <Route path="/admin/chatbots/create">{() => <AdminDashboard />}</Route>
+      <Route path="/admin/chatbots/:id/analytics">{() => <ChatbotAnalytics />}</Route>
       <Route path="/admin/chatbots/:id/edit">{(params) => <AdminDashboard params={params} />}</Route>
       <Route path="/client/login">{() => <ClientLogin />}</Route>
       <Route path="/client/dashboard">{() => <ClientDashboard />}</Route>
