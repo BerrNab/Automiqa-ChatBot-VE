@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { supabaseStorage as storage } from "../storage-supabase";
-import { insertClientSchema } from "@shared/schema";
+import { insertClientSchema } from "../shared/schema";
 
 export class ClientService {
   /**

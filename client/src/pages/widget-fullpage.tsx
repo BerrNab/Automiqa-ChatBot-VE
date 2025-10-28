@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiRequest } from "@/lib/queryClient";
-import type { ChatbotWithClient, ChatbotConfig } from "@shared/schema";
+import type { ChatbotWithClient, ChatbotConfig } from "../../shared/schema";
 import { MessageCircle, Send, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";

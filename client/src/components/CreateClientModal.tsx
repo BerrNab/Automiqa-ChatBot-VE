@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertClientSchema } from "@shared/schema";
+import { insertClientSchema } from "../../shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { InsertClient, ClientWithChatbots } from "@shared/schema";
+import type { InsertClient, ClientWithChatbots } from "../../shared/schema";
 import { useEffect } from "react";
 
 interface CreateClientModalProps {

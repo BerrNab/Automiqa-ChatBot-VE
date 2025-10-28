@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, Check, Globe, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Chatbot } from "@shared/schema";
+import type { Chatbot } from "../../shared/schema";
 
 interface EmbedCodeModalProps {
   chatbot: Chatbot | null;

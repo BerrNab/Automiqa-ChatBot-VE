@@ -8,7 +8,7 @@ import ClientCredentialsModal from "./ClientCredentialsModal.tsx";
 import ClientDetailsModal from "./ClientDetailsModal";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { ClientWithChatbots } from "@shared/schema";
+import type { ClientWithChatbots } from "../../shared/schema";
 
 export default function ClientsTab() {
   const [showCreateModal, setShowCreateModal] = useState(false);

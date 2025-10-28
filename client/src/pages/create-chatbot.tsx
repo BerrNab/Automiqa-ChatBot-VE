@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import ChatbotForm from "@/components/ChatbotForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import type { InsertChatbot } from "@shared/schema";
+import type { InsertChatbot } from "../../shared/schema";
 
 export default function CreateChatbotPage() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);

@@ -1,5 +1,5 @@
 import { supabaseStorage as storage } from "../storage-supabase";
-import { insertChatbotSchema } from "@shared/schema";
+import { insertChatbotSchema } from "../shared/schema";
 import { widgetService } from "../services/widget";
 import { supabaseService } from "../services/supabase";
 

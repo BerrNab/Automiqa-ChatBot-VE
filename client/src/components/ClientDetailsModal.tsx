@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import type { ClientWithChatbots } from "@shared/schema";
+import type { ClientWithChatbots } from "../../shared/schema";
 
 interface ClientDetailsModalProps {
   client: ClientWithChatbots;

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { ChatbotWithClient, WidgetAnalytics } from "@shared/schema";
+import type { ChatbotWithClient, WidgetAnalytics } from "../../shared/schema";
 
 interface ChatbotWidget extends ChatbotWithClient {
   analytics?: WidgetAnalytics;

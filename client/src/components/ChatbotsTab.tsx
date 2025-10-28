@@ -8,7 +8,7 @@ import EmbedCodeModal from "./EmbedCodeModal";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Settings, Code, BarChart2, Power, Plus } from "lucide-react";
-import type { ChatbotWithClient, Chatbot } from "@shared/schema";
+import type { ChatbotWithClient, Chatbot } from "../../shared/schema";
 
 export default function ChatbotsTab() {
   const [showEmbedModal, setShowEmbedModal] = useState(false);

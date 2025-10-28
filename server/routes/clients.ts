@@ -48,7 +48,7 @@ router.delete("/clients/:id", requireAdminAuth, async (req, res) => {
 router.post("/clients/:clientId/credentials", requireAdminAuth, async (req, res) => {
   try {
     const { clientId } = req.params;
-    const { clientCredentialsSchema } = await import("@shared/schema");
+    const { clientCredentialsSchema } = await import("server/shared/schema");
     
     // Validate request body
     const validatedData = clientCredentialsSchema.parse(req.body);

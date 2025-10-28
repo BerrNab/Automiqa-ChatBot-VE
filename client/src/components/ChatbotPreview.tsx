@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ChatbotConfig } from "@shared/schema";
+import type { ChatbotConfig } from "../../shared/schema";
 
 interface ChatbotPreviewProps {
   config: ChatbotConfig;

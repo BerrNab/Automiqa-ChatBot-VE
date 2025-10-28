@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import ChatbotForm from "@/components/ChatbotForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import type { InsertChatbot, Chatbot } from "@shared/schema";
+import type { InsertChatbot, Chatbot } from "../../shared/schema";
 
 interface EditChatbotPageProps {
   id?: string;

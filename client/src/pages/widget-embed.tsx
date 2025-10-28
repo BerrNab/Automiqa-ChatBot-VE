@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from "@/lib/queryClient";
-import type { ChatbotWithClient, ChatbotConfig } from "@shared/schema";
+import type { ChatbotWithClient, ChatbotConfig } from "../../shared/schema";
 import { MessageCircle, Send, X, Clock, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";

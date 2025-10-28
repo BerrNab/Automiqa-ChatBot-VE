@@ -20,6 +20,13 @@ connect.sid*
 *.pem
 *.p12
 *.pfx
+*.env
+server/.env
+server/env
+client/.env
+client/env
+server/.env.local
+client/.env.local
 
 # Log files that might contain sensitive data
 *.log

@@ -1,7 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { supabaseStorage as storage } from "../storage-supabase";
 import { openaiService } from "./openai";
-import type { ChatbotConfig } from "@shared/schema";
+import type { ChatbotConfig } from "../shared/schema";
 
 interface ConversationContext {
   chatbotId: string;

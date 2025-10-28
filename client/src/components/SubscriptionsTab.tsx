@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import AssignSubscriptionModal from "@/components/AssignSubscriptionModal";
-import type { SubscriptionWithClient } from "@shared/schema";
+import type { SubscriptionWithClient } from "../../shared/schema";
 
 export default function SubscriptionsTab() {
   const [statusFilter, setStatusFilter] = useState<string>("all");

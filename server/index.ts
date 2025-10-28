@@ -1,7 +1,12 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
-import { setupVite, serveStatic, log } from "./vite";
 import config, { validateEnv } from "./config";
+
+// Simple logger
+const log = (message: string) => {
+  const timestamp = new Date().toLocaleTimeString();
+  console.log(`${timestamp} [express] ${message}`);
+};
 import { supabaseStorage as storage } from "./storage-supabase";
 import { authRoutes, configureAuth } from "./routes/auth";
 import { adminDashboardRoutes } from "./routes/admin-dashboard";
@@ -21,6 +26,21 @@ validateEnv();
 log('Using Supabase storage implementation');
 
 const app = express();
+
+// CORS middleware for separate frontend deployment
+app.use((req, res, next) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  res.header('Access-Control-Allow-Origin', frontendUrl);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -54,10 +74,8 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  // Create HTTP server
-  const server = createServer(app);
-
+// Setup app function for both local and serverless
+export async function setupApp() {
   // Configure authentication and session middleware first
   configureAuth(app);
 
@@ -72,13 +90,6 @@ app.use((req, res, next) => {
   app.use("/api", clientDashboardRoutes);
   app.use("/api", knowledgeBaseRoutes);
   app.use("/api/email-notifications", emailNotificationRoutes);
-  
-  // Setup Vite or static file serving after API routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
 
   // Error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -89,12 +100,24 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = config.port;
-  server.listen(port, "127.0.0.1", () => {
-    log(`serving on http://localhost:${port}`);
-  });
-})();
+  return app;
+}
+
+// Export app for Vercel
+export { app };
+
+// Only run server if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+  (async () => {
+    // Create HTTP server
+    const server = createServer(app);
+
+    await setupApp();
+
+    // Start server
+    const port = config.port;
+    server.listen(port, "0.0.0.0", () => {
+      log(`API server running on http://localhost:${port}`);
+    });
+  })();
+}

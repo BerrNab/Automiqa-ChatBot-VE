@@ -7,7 +7,7 @@ import { z } from "zod";
 import { supabaseStorage as storage } from "../storage-supabase";
 import { openaiService } from "./openai";
 import { mcpService } from "./mcp";
-import type { ChatbotConfig } from "@shared/schema";
+import type { ChatbotConfig } from "../shared/schema";
 
 interface ConversationContext {
   chatbotId: string;

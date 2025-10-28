@@ -35,7 +35,7 @@ import type {
   LeadWithClient,
   AppointmentWithClient,
   KBDocumentWithChunks
-} from '@shared/schema';
+} from 'server/shared/schema';
 
 export interface IStorage {
   // Admin management
@@ -423,6 +423,8 @@ export class SupabaseStorage implements IStorage {
       const responseRate = totalConversations && totalConversations > 0
         ? Math.round((uniqueConversationsWithResponses / totalConversations) * 100)
         : 0;
+      
+      console.log(`[Stats] Chatbot ${chatbot.id}: messages=${messageCount}, conversations=${totalConversations}, withResponses=${uniqueConversationsWithResponses}, rate=${responseRate}%`);
       
       result.push({
         ...chatbot,

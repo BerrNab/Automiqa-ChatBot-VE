@@ -4,7 +4,7 @@ import { z } from "zod";
 import { supabaseStorage as storage } from "../storage-supabase";
 import { notificationService } from "../services/notifications";
 import { emailService } from "../services/email";
-import { insertEmailSettingsSchema, insertEmailNotificationSchema } from "@shared/schema";
+import { insertEmailSettingsSchema, insertEmailNotificationSchema } from "../shared/schema";
 import { requireAdminAuth } from "../middleware/auth";
 
 export const emailNotificationRoutes = Router();

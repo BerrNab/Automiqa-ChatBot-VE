@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { PaymentLog } from "@shared/schema";
+import type { PaymentLog } from "../../shared/schema";
 
 interface PaymentStats {
   totalRevenue: number;

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Client } from "@shared/schema";
+import type { Client } from "../../shared/schema";
 
 interface AssignSubscriptionModalProps {
   open: boolean;

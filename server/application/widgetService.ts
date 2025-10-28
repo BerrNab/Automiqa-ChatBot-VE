@@ -4,8 +4,8 @@ import { widgetService as originalWidgetService } from "../services/widget";
 import { openaiService } from "../services/openai";
 import { mcpService } from "../services/mcp";
 import { langchainAgentService } from "../services/langchain-agent";
-import { chatbotConfigSchema } from "@shared/schema";
-import type { InsertLead } from "@shared/schema";
+import { chatbotConfigSchema } from "../shared/schema";
+import type { InsertLead } from "../shared/schema";
 
 interface ChatResponse {
   message: string;

@@ -7,7 +7,7 @@ import type {
   Client, 
   EmailNotification,
   InsertEmailNotification 
-} from '@shared/schema';
+} from 'server/shared/schema';
 
 // Notification trigger configuration
 interface NotificationTrigger {

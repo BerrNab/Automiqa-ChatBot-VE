@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import type { Lead, LeadWithClient } from "@shared/schema";
+import type { Lead, LeadWithClient } from "../../shared/schema";
 import {
   Search,
   Download,

@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { insertChatbotSchema } from "@shared/schema";
+import { insertChatbotSchema } from "../../shared/schema";
 import { Plus, Trash2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import BusinessHoursEditor from "./BusinessHoursEditor";
 import AppointmentTypesEditor from "./AppointmentTypesEditor";
@@ -19,7 +19,7 @@ import ValidationSummary from "./ValidationSummary";
 import BackgroundImageUpload from "./BackgroundImageUpload";
 import ChatbotPreview from "./ChatbotPreview";
 import KnowledgeBaseManager from "./KnowledgeBaseManager";
-import type { InsertChatbot, Client, Chatbot, ChatbotConfig } from "@shared/schema";
+import type { InsertChatbot, Client, Chatbot, ChatbotConfig } from "../../shared/schema";
 
 const DEFAULT_CUSTOM_INSTRUCTIONS = `You are a helpful assistant chatbot. Your primary role is to assist users with their questions and provide helpful information based on the available knowledge base and tools.
 

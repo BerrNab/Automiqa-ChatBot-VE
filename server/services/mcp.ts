@@ -1,4 +1,4 @@
-import { chatbotConfigSchema, type ChatbotConfig } from "@shared/schema";
+import { chatbotConfigSchema, type ChatbotConfig } from "../shared/schema.js";
 
 /**
  * SAFE MCP IMPLEMENTATION

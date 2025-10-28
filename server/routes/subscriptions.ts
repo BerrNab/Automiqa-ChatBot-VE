@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAdminAuth } from "../middleware/auth";
 import { subscriptionService } from "../application/subscriptionService";
-import { insertSubscriptionSchema } from "@shared/schema";
+import { insertSubscriptionSchema } from "../shared/schema";
 import { fromZodError } from "zod-validation-error";
 
 const router = Router();

@@ -1,6 +1,6 @@
 import OpenAI from "openai";
-import type { ChatbotConfig } from "@shared/schema";
-import { chatbotConfigSchema } from "@shared/schema";
+import type { ChatbotConfig } from "../shared/schema.js";
+import { chatbotConfigSchema } from "../shared/schema.js";
 import { supabaseStorage as storage } from "../storage-supabase";
 
 // Define the structured response type

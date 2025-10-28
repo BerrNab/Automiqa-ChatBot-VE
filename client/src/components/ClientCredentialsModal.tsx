@@ -10,10 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { clientCredentialsSchema } from "@shared/schema";
+import { clientCredentialsSchema } from "../../shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { ClientWithChatbots, ClientCredentials, ClientPortalStatus } from "@shared/schema";
+import type { ClientWithChatbots, ClientCredentials, ClientPortalStatus } from "../../shared/schema";
 import { Copy, Key, Shield, UserCheck, UserX, ExternalLink } from "lucide-react";
 
 interface ClientCredentialsModalProps {
