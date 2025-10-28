@@ -10,6 +10,7 @@ import type { InsertLead } from "@shared/schema";
 interface ChatResponse {
   message: string;
   responseOptions?: any;
+  links?: Array<{title: string, url: string}>;
 }
 
 export class WidgetApplicationService {
@@ -268,9 +269,10 @@ export class WidgetApplicationService {
           conversationId: conversation?.id
         };
         
-        // Use LangChain agent with knowledge base, MCP tools, and memory
-        console.log(`[Widget] Processing message with LangChain agent for chatbot ${chatbotId}`);
-        responseText = await langchainAgentService.processMessage(message, validatedConfig, agentContext);
+        // Use simple chat service (bypasses LangChain complexity)
+        console.log(`[Widget] Processing message with Simple Chat for chatbot ${chatbotId}`);
+        const { simpleChatService } = await import('../services/simple-chat');
+        responseText = await simpleChatService.processMessage(message, validatedConfig, agentContext);
         
       } catch (configError: any) {
         console.error(`Agent processing error for chatbot ${chatbotId}:`, configError);
@@ -289,9 +291,40 @@ export class WidgetApplicationService {
         responseText = fallbackResponse.message;
       }
       
-      // Detect response options from the text
-      const responseOptions = openaiService.detectResponseOptions(responseText);
-      const response: ChatResponse = { message: responseText, responseOptions };
+      // Extract response options if present (from simple chat service)
+      let responseOptions: string[] | undefined;
+      const optionsMatch = responseText.match(/__RESPONSE_OPTIONS__(.+?)(?=\n|$)/);
+      if (optionsMatch) {
+        try {
+          responseOptions = JSON.parse(optionsMatch[1]);
+          // Remove the options marker from the response text
+          responseText = responseText.replace(/__RESPONSE_OPTIONS__.+?(?=\n|$)/, '').trim();
+        } catch (e) {
+          console.error('[Widget] Failed to parse response options:', e);
+        }
+      }
+      
+      // Extract links if present
+      let links: Array<{title: string, url: string}> | undefined;
+      const linksMatch = responseText.match(/__LINKS__(.+?)(?=\n|$)/);
+      if (linksMatch) {
+        try {
+          links = JSON.parse(linksMatch[1]);
+          // Remove the links marker from the response text
+          responseText = responseText.replace(/__LINKS__.+?(?=\n|$)/, '').trim();
+        } catch (e) {
+          console.error('[Widget] Failed to parse links:', e);
+        }
+      }
+      
+      // Fallback: detect response options from the text
+      // Only use auto-detection if no explicit options were provided via __RESPONSE_OPTIONS__
+      // This prevents duplicates when the AI includes numbered lists in the response
+      if (!responseOptions && !optionsMatch) {
+        responseOptions = openaiService.detectResponseOptions(responseText);
+      }
+      
+      const response: ChatResponse = { message: responseText, responseOptions, links };
       
       // Store AI response
       if (conversation) {

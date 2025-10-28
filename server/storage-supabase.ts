@@ -705,6 +705,25 @@ export class SupabaseStorage implements IStorage {
     return data as KBDocument;
   }
 
+  async updateKBDocumentProgress(id: string, processedChunks: number, totalChunks: number): Promise<void> {
+    const progress = Math.round((processedChunks / totalChunks) * 100);
+    
+    const { error } = await supabaseAdmin
+      .from('kb_documents')
+      .update({ 
+        processing_progress: progress,
+        processed_chunks: processedChunks,
+        total_chunks: totalChunks,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+    
+    if (error) {
+      console.error(`Failed to update KB document progress: ${error.message}`);
+      // Don't throw error, just log it - progress updates shouldn't break the flow
+    }
+  }
+
   async deleteKBDocument(id: string): Promise<void> {
     // First get the document to find its storage path
     const { data: document } = await supabase
@@ -769,9 +788,11 @@ export class SupabaseStorage implements IStorage {
   }>> {
     try {
       // Use the pgvector extension to find similar content
+      // Lower threshold (0.5) to capture more potentially relevant results
+      // The agent will filter and synthesize the best information
       const { data, error } = await supabase.rpc('match_documents', {
         query_embedding: queryEmbedding,
-        match_threshold: 0.7,
+        match_threshold: 0.5,
         match_count: limit,
         p_chatbot_id: chatbotId
       });

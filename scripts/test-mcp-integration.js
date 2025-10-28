@@ -1,5 +1,5 @@
 // Quick test script to verify safe MCP integration works
-import { safeMcpManager, mcpService } from './server/services/mcp.js';
+import { safeMcpManager, mcpService } from '../server/services/mcp.js';
 
 async function testSafeMCPIntegration() {
   console.log('🔧 Testing Safe MCP Integration...\n');

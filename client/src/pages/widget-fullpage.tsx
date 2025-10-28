@@ -9,6 +9,9 @@ import { apiRequest } from "@/lib/queryClient";
 import type { ChatbotWithClient, ChatbotConfig } from "@shared/schema";
 import { MessageCircle, Send, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getTranslations } from "@/lib/translations";
+import { MarkdownMessage } from "@/components/MarkdownMessage";
 
 interface ChatMessage {
   id: string;
@@ -16,6 +19,7 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   responseOptions?: string[];
+  links?: Array<{title: string, url: string}>;
 }
 
 interface UserDetails {
@@ -85,6 +89,10 @@ export default function WidgetFullpage() {
   const [userPhone, setUserPhone] = useState("");
   const [preChatError, setPreChatError] = useState("");
   const [isPreChatSubmitting, setIsPreChatSubmitting] = useState(false);
+  
+  // Language and RTL states
+  const [currentLanguage, setCurrentLanguage] = useState<string>("en");
+  const [isRTL, setIsRTL] = useState(false);
 
   const { data: chatbot, isLoading: chatbotLoading, error } = useQuery<ChatbotWithClient>({
     queryKey: ["/api/widget", chatbotId],
@@ -94,6 +102,28 @@ export default function WidgetFullpage() {
   // Cast config to ChatbotConfig type for proper typing
   const config = chatbot?.config as ChatbotConfig | undefined;
   const theme = config?.widgetSettings?.designTheme || 'modern';
+  
+  // Initialize language from config
+  useEffect(() => {
+    if (config?.widgetSettings?.defaultLanguage) {
+      const defaultLang = config.widgetSettings.defaultLanguage;
+      setCurrentLanguage(defaultLang);
+      
+      // Check if the language is RTL
+      const lang = config.widgetSettings.supportedLanguages?.find(l => l.code === defaultLang);
+      setIsRTL(lang?.rtl || false);
+    }
+  }, [config]);
+  
+  // Handle language change
+  const handleLanguageChange = (languageCode: string) => {
+    setCurrentLanguage(languageCode);
+    const lang = config?.widgetSettings?.supportedLanguages?.find(l => l.code === languageCode);
+    setIsRTL(lang?.rtl || false);
+  };
+  
+  // Get translations for current language
+  const t = getTranslations(currentLanguage);
   
   // Get theme-specific classes
   const getThemeClasses = () => {
@@ -111,12 +141,35 @@ export default function WidgetFullpage() {
     }
   };
 
+  // Helper to create glass effect with primary color tint
+  const getGlassStyle = (opacity: number = 0.7): React.CSSProperties => {
+    // Convert hex to RGB and add primary color tint
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 255, g: 255, b: 255 };
+    };
+    
+    const rgb = hexToRgb(primaryColor);
+    // Mix white with primary color (80% white, 20% primary)
+    const mixedR = Math.round(255 * 0.8 + rgb.r * 0.2);
+    const mixedG = Math.round(255 * 0.8 + rgb.g * 0.2);
+    const mixedB = Math.round(255 * 0.8 + rgb.b * 0.2);
+    
+    return {
+      background: `rgba(${mixedR}, ${mixedG}, ${mixedB}, ${opacity})`,
+      backdropFilter: 'blur(10px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+      border: `1px solid rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`,
+    };
+  };
+
   const getContainerStyle = (): React.CSSProperties => {
     if (theme === 'glass') {
-      return {
-        background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(10px)',
-      };
+      return getGlassStyle(0.7);
     } else if (theme === 'gradient') {
       return {
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -154,8 +207,6 @@ export default function WidgetFullpage() {
       return {
         ...baseStyle,
         backgroundColor: primaryColor,
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         borderBottom: `1px solid ${secondaryColor}30`,
       };
     } else if (theme === 'minimal') {
@@ -258,6 +309,8 @@ export default function WidgetFullpage() {
 
   // Check if business is open
   const isBusinessOpen = () => {
+    // If business hours are disabled, always return true (24/7 availability)
+    if (!config?.businessHours?.enabled) return true;
     if (!config?.businessHours?.schedule) return true;
     
     const now = new Date();
@@ -387,6 +440,7 @@ export default function WidgetFullpage() {
         content: data.response || config?.behavior?.fallbackMessage || "I'm sorry, I couldn't process your request.",
         timestamp: new Date(),
         responseOptions: data.responseOptions,
+        links: data.links,
       };
       
       setMessages((prev) => [...prev, assistantMessage]);
@@ -499,6 +553,7 @@ export default function WidgetFullpage() {
         getThemeClasses()
       )}
       style={getContainerStyle()}
+      dir={isRTL ? "rtl" : "ltr"}
     >
       <AnimatedBackground theme={theme} />
       
@@ -510,7 +565,7 @@ export default function WidgetFullpage() {
             className="relative p-6 text-white shadow-lg"
             style={getHeaderStyle()}
           >
-            <div className="max-w-4xl mx-auto flex items-center justify-center relative z-10">
+            <div className="max-w-4xl mx-auto flex items-center justify-between relative z-10">
               <div className="flex items-center gap-4">
                 {logoUrl ? (
                   <img 
@@ -525,16 +580,27 @@ export default function WidgetFullpage() {
                 )}
                 <h1 className="text-2xl font-bold">{companyName}</h1>
               </div>
+              {config?.widgetSettings?.enableLanguageSwitcher && config?.widgetSettings?.supportedLanguages && (
+                <LanguageSwitcher
+                  languages={config.widgetSettings.supportedLanguages}
+                  currentLanguage={currentLanguage}
+                  onLanguageChange={handleLanguageChange}
+                  primaryColor="#FFFFFF"
+                />
+              )}
             </div>
           </div>
           
           {/* Pre-chat form content */}
           <div className="flex-1 flex items-center justify-center p-6">
-            <div className={cn(
-              "w-full max-w-md p-8 rounded-2xl",
-              theme === 'glass' ? "bg-white/80 backdrop-blur-lg" : "bg-white",
-              theme === 'minimal' ? "border-2 border-black" : "shadow-2xl"
-            )}>
+            <div 
+              className={cn(
+                "w-full max-w-md p-8 rounded-2xl",
+                theme !== 'glass' && "bg-white",
+                theme === 'minimal' ? "border-2 border-black" : "shadow-2xl"
+              )}
+              style={theme === 'glass' ? getGlassStyle(0.8) : undefined}
+            >
               <div className="space-y-6">
                 {/* Icon and welcome message */}
                 <div className="text-center space-y-3">
@@ -548,10 +614,10 @@ export default function WidgetFullpage() {
                     />
                   </div>
                   <h2 className="text-2xl font-semibold text-gray-900">
-                    Welcome to {companyName}
+                    {t.welcomeTo} {companyName}
                   </h2>
                   <p className="text-gray-600">
-                    Please provide your details to start chatting with our assistant
+                    {t.provideDetails}
                   </p>
                 </div>
                 
@@ -560,7 +626,7 @@ export default function WidgetFullpage() {
                   <div>
                     <Input
                       type="text"
-                      placeholder="Your name"
+                      placeholder={t.yourName}
                       value={userName}
                       onChange={(e) => setUserName(e.target.value)}
                       disabled={isPreChatSubmitting}
@@ -575,7 +641,7 @@ export default function WidgetFullpage() {
                   <div>
                     <Input
                       type="tel"
-                      placeholder="Your phone number"
+                      placeholder={t.yourPhone}
                       value={userPhone}
                       onChange={(e) => setUserPhone(e.target.value)}
                       disabled={isPreChatSubmitting}
@@ -612,10 +678,10 @@ export default function WidgetFullpage() {
                     {isPreChatSubmitting ? (
                       <div className="flex items-center justify-center">
                         <div className="animate-spin w-5 h-5 border-3 border-white border-t-transparent rounded-full mr-2" />
-                        Starting Chat...
+                        {t.starting}
                       </div>
                     ) : (
-                      'Start Chat'
+                      t.startChat
                     )}
                   </Button>
                 </form>
@@ -657,22 +723,30 @@ export default function WidgetFullpage() {
                 {isBusinessOpen() ? (
                   <>
                     <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                    <span>We're online - How can we help?</span>
+                    <span>{t.weAreOnline}</span>
                   </>
                 ) : (
                   <>
                     <Clock className="w-4 h-4" />
-                    <span>Currently offline - Leave us a message</span>
+                    <span>{t.currentlyOffline}</span>
                   </>
                 )}
               </div>
             </div>
           </div>
+          {config?.widgetSettings?.enableLanguageSwitcher && config?.widgetSettings?.supportedLanguages && (
+            <LanguageSwitcher
+              languages={config.widgetSettings.supportedLanguages}
+              currentLanguage={currentLanguage}
+              onLanguageChange={handleLanguageChange}
+              primaryColor="#FFFFFF"
+            />
+          )}
         </div>
       </div>
 
-      {/* Business Hours Notice */}
-      {!isBusinessOpen() && (
+      {/* Business Hours Notice - only show if business hours are enabled */}
+      {config?.businessHours?.enabled && !isBusinessOpen() && (
         <div className={cn(
           "px-6 py-3 text-center animate-slideUp",
           theme === 'gradient' ? "bg-white/10 text-white" : "bg-orange-50 text-orange-600"
@@ -695,17 +769,17 @@ export default function WidgetFullpage() {
               <div
                 className={cn(
                   "inline-block max-w-2xl p-4 rounded-2xl transition-all duration-300",
-                  "hover:scale-[1.01] hover:shadow-xl",
-                  theme === 'glass' && message.role !== "user" && "glass-effect"
+                  "hover:scale-[1.01] hover:shadow-xl"
                 )}
                 style={{
                   ...getMessageStyle(message.role === "user"),
+                  ...(theme === 'glass' && message.role !== "user" ? getGlassStyle(0.8) : {}),
                   borderRadius: theme === 'minimal' ? '4px' : '20px',
                   boxShadow: theme !== 'minimal' ? '0 8px 16px rgba(0, 0, 0, 0.1)' : undefined,
                 }}
                 data-testid={`message-${message.role}-${index}`}
               >
-                <p className="text-base leading-relaxed">{message.content}</p>
+                <MarkdownMessage content={message.content} className="text-base" />
                 <p className={cn(
                   "text-xs mt-2",
                   message.role === "user" ? "text-white/70" : "text-gray-500"
@@ -723,10 +797,10 @@ export default function WidgetFullpage() {
                         size="sm"
                         className={cn(
                           "w-full justify-start text-left widget-button",
-                          "transition-all duration-300 hover:scale-[1.02]",
-                          theme === 'glass' && "glass-effect"
+                          "transition-all duration-300 hover:scale-[1.02]"
                         )}
                         style={{
+                          ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
                           animationDelay: `${optionIndex * 0.1}s`,
                           borderColor: primaryColor,
                           color: theme === 'gradient' ? 'white' : primaryColor,
@@ -740,6 +814,34 @@ export default function WidgetFullpage() {
                     ))}
                   </div>
                 )}
+                
+                {/* Links */}
+                {message.links && message.links.length > 0 && (
+                  <div className="mt-4 space-y-2 stagger-enter">
+                    {message.links.map((link, linkIndex) => (
+                      <Button
+                        key={linkIndex}
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "w-full justify-start text-left widget-button",
+                          "transition-all duration-300 hover:scale-[1.02]"
+                        )}
+                        style={{
+                          ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
+                          animationDelay: `${linkIndex * 0.1}s`,
+                          borderColor: primaryColor,
+                          color: theme === 'gradient' ? 'white' : primaryColor,
+                          borderWidth: theme === 'minimal' ? '2px' : '1px',
+                        }}
+                        onClick={() => window.open(link.url, '_blank')}
+                        data-testid={`button-link-${linkIndex}`}
+                      >
+                        🔗 {link.title}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -747,11 +849,13 @@ export default function WidgetFullpage() {
           {/* Typing Indicator */}
           {showTyping && (
             <div className="text-left message-enter">
-              <div className={cn(
-                "inline-block p-4 rounded-2xl",
-                theme === 'glass' ? "glass-effect" : 
-                theme === 'gradient' ? "bg-white/20" : "bg-gray-100"
-              )}>
+              <div 
+                className={cn(
+                  "inline-block p-4 rounded-2xl",
+                  theme === 'gradient' ? "bg-white/20" : theme !== 'glass' && "bg-gray-100"
+                )}
+                style={theme === 'glass' ? getGlassStyle(0.7) : undefined}
+              >
                 <TypingIndicator primaryColor={theme === 'gradient' ? 'white' : primaryColor} />
               </div>
             </div>
@@ -764,7 +868,7 @@ export default function WidgetFullpage() {
                 "text-sm mb-4",
                 theme === 'gradient' ? "text-white/70" : "text-gray-500"
               )}>
-                Quick questions to get started:
+                {t.quickQuestions}
               </p>
               <div className="flex flex-wrap justify-center gap-3 stagger-enter">
                 {config.behavior.suggestedPrompts.map((prompt, index) => (
@@ -774,10 +878,10 @@ export default function WidgetFullpage() {
                     size="sm"
                     onClick={() => handleSuggestedPrompt(prompt)}
                     className={cn(
-                      "widget-button transition-all duration-300",
-                      theme === 'glass' && "glass-effect"
+                      "widget-button transition-all duration-300"
                     )}
                     style={{
+                      ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
                       animationDelay: `${index * 0.1}s`,
                       borderColor: theme === 'gradient' ? 'white' : primaryColor,
                       color: theme === 'gradient' ? 'white' : primaryColor,
@@ -796,24 +900,26 @@ export default function WidgetFullpage() {
       </ScrollArea>
 
       {/* Input Area */}
-      <div className={cn(
-        "border-t p-6",
-        theme === 'glass' && "glass-effect",
-        theme === 'gradient' && "bg-white/10 border-white/20",
-        theme === 'minimal' && "border-black border-t-2"
-      )}>
+      <div 
+        className={cn(
+          "border-t p-6",
+          theme === 'gradient' && "bg-white/10 border-white/20",
+          theme === 'minimal' && "border-black border-t-2"
+        )}
+        style={theme === 'glass' ? getGlassStyle(0.5) : undefined}
+      >
         <div className="max-w-4xl mx-auto">
           <div className="flex gap-4">
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={isBusinessOpen() ? "Type your message..." : "Leave us a message..."}
+              placeholder={isBusinessOpen() ? t.typeMessage : t.leaveMessage}
               disabled={isLoading}
               className={cn(
                 "flex-1 text-lg transition-all duration-300",
                 "focus:scale-[1.01] focus:shadow-lg",
-                theme === 'glass' && "bg-white/50 backdrop-blur-sm",
+                theme === 'glass' && "bg-white/50 backdrop-blur-sm text-gray-900 placeholder:text-gray-500",
                 theme === 'gradient' && "bg-white/20 text-white placeholder-white/50 border-white/30",
                 theme === 'minimal' && "border-black border-2 rounded-none"
               )}
@@ -840,7 +946,7 @@ export default function WidgetFullpage() {
               data-testid="button-send"
             >
               <Send className="w-5 h-5" />
-              <span className="ml-2">Send</span>
+              <span className={cn(isRTL ? "mr-2" : "ml-2")}>{t.send}</span>
             </Button>
           </div>
           
@@ -849,7 +955,7 @@ export default function WidgetFullpage() {
               "text-sm",
               theme === 'gradient' ? "text-white/50" : "text-gray-400"
             )}>
-              Powered by {companyName} Chat
+              {t.poweredBy} {companyName} Chat
             </p>
           </div>
         </div>

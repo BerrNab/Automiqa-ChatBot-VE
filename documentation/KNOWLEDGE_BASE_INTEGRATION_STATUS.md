@@ -23,17 +23,20 @@
 - ✅ Knowledge base context injection into AI prompts
 - ✅ **FIXED**: `chatbotId` now passed to `processMessage` function
 
-## ⚠️ Critical Issue - Database Migration Required
+## ⚠️ Critical Issue - Database Migrations Required
 
 ### The Problem
-The knowledge base **will not work** until you run the database migration because:
+The knowledge base **will not work** until you run the database migrations because:
 
 1. The `kb_chunks` table is missing the `embedding` column
 2. The `pgvector` extension is not enabled
-3. Without these, the vector similarity search will fail
+3. **The `match_documents` function is missing** (causes "My apologies..." responses)
+4. Without these, the vector similarity search will fail silently
 
 ### The Solution
-**You MUST run this migration:** `migrations/0003_add_vector_embeddings.sql`
+**You MUST run these migrations in order:**
+1. `migrations/0003_add_vector_embeddings.sql` - Adds vector support
+2. `migrations/0004_add_match_documents_function.sql` - Adds search function (NEW!)
 
 ## 🚀 How to Enable Knowledge Base
 
@@ -42,7 +45,7 @@ The knowledge base **will not work** until you run the database migration becaus
 **Option A - Supabase Dashboard (Easiest):**
 1. Open your Supabase project
 2. Go to **SQL Editor**
-3. Copy the contents of `migrations/0003_add_vector_embeddings.sql`:
+3. **First**, run `migrations/0003_add_vector_embeddings.sql`:
    ```sql
    -- Enable pgvector extension for vector similarity search
    CREATE EXTENSION IF NOT EXISTS vector;
@@ -58,10 +61,48 @@ The knowledge base **will not work** until you run the database migration becaus
    WITH (lists = 100);
    ```
 4. Click **Run**
+5. **Then**, run `migrations/0004_add_match_documents_function.sql`:
+   ```sql
+   -- Create the match_documents function for vector similarity search
+   CREATE OR REPLACE FUNCTION match_documents (
+     query_embedding vector(1536),
+     match_threshold float,
+     match_count int,
+     p_chatbot_id varchar
+   )
+   RETURNS TABLE (
+     text text,
+     similarity float,
+     filename text,
+     metadata jsonb
+   )
+   LANGUAGE plpgsql
+   AS $$
+   BEGIN
+     RETURN QUERY
+     SELECT 
+       c.text,
+       1 - (c.embedding <=> query_embedding) as similarity,
+       d.filename,
+       c.metadata
+     FROM kb_chunks c
+     JOIN kb_documents d ON c.document_id = d.id
+     WHERE 
+       c.chatbot_id = p_chatbot_id
+       AND c.embedding IS NOT NULL
+       AND d.status = 'ready'
+       AND 1 - (c.embedding <=> query_embedding) > match_threshold
+     ORDER BY c.embedding <=> query_embedding
+     LIMIT match_count;
+   END;
+   $$;
+   ```
+6. Click **Run**
 
 **Option B - Command Line:**
 ```bash
 psql "your-connection-string" -f migrations/0003_add_vector_embeddings.sql
+psql "your-connection-string" -f migrations/0004_add_match_documents_function.sql
 ```
 
 ### Step 2: Restart Your Server
@@ -138,6 +179,11 @@ After running the migration, restart your development server to pick up the sche
 
 ## 🐛 Troubleshooting
 
+### AI responds with "My apologies..." for everything
+- **Cause:** `match_documents` function is missing from database
+- **Fix:** Run `migrations/0004_add_match_documents_function.sql`
+- **How to verify:** Check Supabase SQL Editor for the function or look at server logs for RPC errors
+
 ### "Could not find the 'embedding' column"
 - **Cause:** Migration not run
 - **Fix:** Run `0003_add_vector_embeddings.sql`
@@ -153,6 +199,13 @@ After running the migration, restart your development server to pick up the sche
 ### "not enough data to build index"
 - **Cause:** IVFFlat index needs data
 - **Fix:** Upload a few documents first, or use HNSW index instead
+
+### Knowledge base search returns empty results
+- **Cause:** Either no documents uploaded, `match_documents` function missing, or embeddings not generated
+- **Fix:** 
+  1. Verify `match_documents` function exists in database
+  2. Check that documents have status "ready" 
+  3. Verify embeddings were created: `SELECT COUNT(*) FROM kb_chunks WHERE embedding IS NOT NULL;`
 
 ## 📝 Next Steps
 

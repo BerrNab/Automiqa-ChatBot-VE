@@ -10,6 +10,7 @@ import { paymentRoutes } from "./payments";
 import { clientDashboardRoutes } from "./client-dashboard";
 import { knowledgeBaseRoutes } from "./knowledge-base";
 import { emailNotificationRoutes } from "./email-notifications";
+import { debugRoutes } from "./debug";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication and session middleware first
@@ -25,7 +26,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", paymentRoutes);
   app.use("/api", clientDashboardRoutes);
   app.use("/api", knowledgeBaseRoutes);
+  app.use("/api", debugRoutes);
   app.use("/api/email-notifications", emailNotificationRoutes);
+
 
   // Create HTTP server
   const server = createServer(app);

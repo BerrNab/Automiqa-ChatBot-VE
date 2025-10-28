@@ -116,19 +116,21 @@ export default function ChatbotsTab() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Messages Today:</span>
                     <span className="font-medium" data-testid={`text-message-count-${chatbot.id}`}>
-                      {chatbot.messageCount}
+                      {chatbot.messageCount ?? 0}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Response Rate:</span>
                     <span className="font-medium" data-testid={`text-response-rate-${chatbot.id}`}>
-                      {chatbot.responseRate}%
+                      {chatbot.responseRate ?? 0}%
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Last Updated:</span>
                     <span className="font-medium">
-                      {new Date(chatbot.updatedAt).toLocaleDateString()}
+                      {chatbot.updatedAt 
+                        ? new Date(chatbot.updatedAt).toLocaleDateString()
+                        : 'Never'}
                     </span>
                   </div>
                 </div>
@@ -157,6 +159,7 @@ export default function ChatbotsTab() {
                   <button 
                     className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-colors" 
                     title="Analytics"
+                    onClick={() => setLocation(`/admin/chatbots/${chatbot.id}/analytics`)}
                     data-testid={`button-analytics-${chatbot.id}`}
                   >
                     <BarChart2 className="w-4 h-4" />

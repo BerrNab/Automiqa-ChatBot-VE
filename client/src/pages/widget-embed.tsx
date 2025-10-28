@@ -10,6 +10,9 @@ import { apiRequest } from "@/lib/queryClient";
 import type { ChatbotWithClient, ChatbotConfig } from "@shared/schema";
 import { MessageCircle, Send, X, Clock, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getTranslations } from "@/lib/translations";
+import { MarkdownMessage } from "@/components/MarkdownMessage";
 
 interface ChatMessage {
   id: string;
@@ -17,6 +20,7 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   responseOptions?: string[];
+  links?: Array<{title: string, url: string}>;
 }
 
 interface LeadInfo {
@@ -173,6 +177,10 @@ export default function WidgetEmbed() {
   const [userPhone, setUserPhone] = useState("");
   const [preChatError, setPreChatError] = useState("");
   const [isPreChatSubmitting, setIsPreChatSubmitting] = useState(false);
+  
+  // Language and RTL states
+  const [currentLanguage, setCurrentLanguage] = useState<string>("en");
+  const [isRTL, setIsRTL] = useState(false);
 
   const { data: chatbot, isLoading: chatbotLoading, error } = useQuery<ChatbotWithClient>({
     queryKey: ["/api/widget", chatbotId],
@@ -182,6 +190,28 @@ export default function WidgetEmbed() {
   // Cast config to ChatbotConfig type for proper typing
   const config = chatbot?.config as ChatbotConfig | undefined;
   const theme = config?.widgetSettings?.designTheme || 'soft';
+  
+  // Initialize language from config
+  useEffect(() => {
+    if (config?.widgetSettings?.defaultLanguage) {
+      const defaultLang = config.widgetSettings.defaultLanguage;
+      setCurrentLanguage(defaultLang);
+      
+      // Check if the language is RTL
+      const lang = config.widgetSettings.supportedLanguages?.find(l => l.code === defaultLang);
+      setIsRTL(lang?.rtl || false);
+    }
+  }, [config]);
+  
+  // Handle language change
+  const handleLanguageChange = (languageCode: string) => {
+    setCurrentLanguage(languageCode);
+    const lang = config?.widgetSettings?.supportedLanguages?.find(l => l.code === languageCode);
+    setIsRTL(lang?.rtl || false);
+  };
+  
+  // Get translations for current language
+  const t = getTranslations(currentLanguage);
   
   // Get theme-specific classes
   const getThemeClasses = () => {
@@ -201,29 +231,58 @@ export default function WidgetEmbed() {
     }
   };
 
-  const getHeaderStyle = () => {
-    const baseStyle: React.CSSProperties = {};
+  const getGlassStyle = (opacity: number = 0.7): React.CSSProperties => {
+    // Convert hex to RGB and add primary color tint
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 255, g: 255, b: 255 };
+    };
+    
+    const rgb = hexToRgb(config?.branding?.primaryColor || '#3B82F6');
+    // Mix white with primary color (80% white, 20% primary)
+    const mixedR = Math.round(255 * 0.8 + rgb.r * 0.2);
+    const mixedG = Math.round(255 * 0.8 + rgb.g * 0.2);
+    const mixedB = Math.round(255 * 0.8 + rgb.b * 0.2);
+    
+    return {
+      background: `rgba(${mixedR}, ${mixedG}, ${mixedB}, ${opacity})`,
+      backdropFilter: 'blur(10px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+      border: `1px solid rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`,
+    };
+  };
+
+  const getHeaderStyle = (): React.CSSProperties => {
     const primaryColor = config?.branding?.primaryColor || '#3B82F6';
+    
+    const baseStyle: React.CSSProperties = {
+      color: 'white',
+      padding: '16px',
+    };
     
     if (theme === 'sleek') {
       return {
-        ...baseStyle,
         backgroundColor: primaryColor,
         borderRadius: '0',
-        borderBottom: 'none',
+        borderBottom: `3px solid ${primaryColor}`,
+        filter: 'brightness(0.95)',
       };
     } else if (theme === 'soft') {
       return {
         ...baseStyle,
         backgroundColor: primaryColor,
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+        borderRadius: '32px 32px 0 0',
+        padding: '20px',
       };
     } else if (theme === 'glass') {
       return {
         ...baseStyle,
-        backgroundColor: `${primaryColor}15`,
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        backgroundColor: primaryColor,
         borderBottom: `1px solid ${primaryColor}20`,
       };
     } else if (theme === 'minimal') {
@@ -236,8 +295,10 @@ export default function WidgetEmbed() {
     } else if (theme === 'elevated') {
       return {
         ...baseStyle,
-        backgroundColor: primaryColor,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+        background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`,
+        boxShadow: '0 -6px 30px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(255, 255, 255, 0.2)',
+        borderRadius: '28px 28px 0 0',
+        padding: '20px',
       };
     }
     
@@ -269,13 +330,16 @@ export default function WidgetEmbed() {
         return {
           backgroundColor: userMessageBgColor,
           color: textColor,
-          borderRadius: '8px',
+          borderRadius: '4px',
+          border: `1px solid ${userMessageBgColor}`,
         };
       } else if (theme === 'soft') {
         return {
           backgroundColor: userMessageBgColor,
           color: textColor,
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.06)',
+          boxShadow: '0 3px 12px rgba(0, 0, 0, 0.1)',
+          borderRadius: '24px 24px 4px 24px',
+          padding: '14px 18px',
         };
       } else if (theme === 'glass') {
         return {
@@ -294,9 +358,12 @@ export default function WidgetEmbed() {
         };
       } else if (theme === 'elevated') {
         return {
-          backgroundColor: userMessageBgColor,
+          background: `linear-gradient(135deg, ${userMessageBgColor} 0%, ${userMessageBgColor}ee 100%)`,
           color: textColor,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06)',
+          boxShadow: '0 6px 20px rgba(0, 0, 0, 0.18), 0 3px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+          borderRadius: '22px 22px 6px 22px',
+          padding: '14px 18px',
+          transform: 'translateY(-2px)',
         };
       }
       return {
@@ -309,13 +376,16 @@ export default function WidgetEmbed() {
         return {
           backgroundColor: botMessageBgColor,
           color: botTextColor,
-          borderRadius: '8px',
+          borderRadius: '4px',
+          border: '1px solid #e5e7eb',
         };
       } else if (theme === 'soft') {
         return {
           backgroundColor: botMessageBgColor,
           color: botTextColor,
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          borderRadius: '24px 24px 24px 4px',
+          padding: '14px 18px',
         };
       } else if (theme === 'glass') {
         return {
@@ -336,7 +406,10 @@ export default function WidgetEmbed() {
         return {
           backgroundColor: botMessageBgColor,
           color: botTextColor,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08)',
+          borderRadius: '22px 22px 22px 6px',
+          padding: '14px 18px',
+          border: '1px solid rgba(0, 0, 0, 0.05)',
         };
       }
       return {
@@ -348,6 +421,8 @@ export default function WidgetEmbed() {
 
   // Check if business is open
   const isBusinessOpen = () => {
+    // If business hours are disabled, always return true (24/7 availability)
+    if (!config?.businessHours?.enabled) return true;
     if (!config?.businessHours?.schedule) return true;
     
     const now = new Date();
@@ -420,6 +495,7 @@ export default function WidgetEmbed() {
         role: "assistant",
         content: welcomeMsg,
         timestamp: new Date(),
+        responseOptions: config.behavior?.suggestedPrompts,
       },
     ]);
 
@@ -587,6 +663,7 @@ export default function WidgetEmbed() {
         content: data.response || config?.behavior?.fallbackMessage || "I'm sorry, I couldn't process your request.",
         timestamp: new Date(),
         responseOptions: data.responseOptions,
+        links: data.links,
       };
       
       setMessages((prev) => [...prev, assistantMessage]);
@@ -746,32 +823,31 @@ export default function WidgetEmbed() {
             config?.widgetSettings?.position === "top-right" && "top-4 right-4",
             !config?.widgetSettings?.position && "bottom-4 right-4",
             isMinimized ? "w-80 h-16" : "w-96 h-[600px]",
-            theme === 'glass' && "glass-effect",
             theme === 'wave' && "overflow-hidden"
           )}
+          dir={isRTL ? "rtl" : "ltr"}
           style={{
             animation: 'scaleIn 0.3s ease-out',
-            borderRadius: theme === 'sleek' ? '12px' : theme === 'minimal' ? '8px' : '16px',
+            borderRadius: theme === 'sleek' ? '0' : theme === 'soft' ? '32px' : theme === 'elevated' ? '28px' : theme === 'minimal' ? '8px' : '16px',
             boxShadow: theme === 'elevated' 
-              ? '0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.08)'
+              ? '0 25px 60px rgba(0, 0, 0, 0.2), 0 10px 30px rgba(0, 0, 0, 0.15)'
               : theme === 'sleek'
-              ? '0 8px 24px rgba(0, 0, 0, 0.12)'
+              ? '0 8px 24px rgba(0, 0, 0, 0.12), -4px 0 0 0 ' + (config?.branding?.primaryColor || '#3B82F6')
               : theme === 'soft'
-              ? '0 4px 16px rgba(0, 0, 0, 0.08)'
+              ? '0 8px 32px rgba(0, 0, 0, 0.12)'
               : theme === 'glass'
               ? '0 8px 32px rgba(0, 0, 0, 0.08)'
               : '0 1px 3px rgba(0, 0, 0, 0.12)',
+            ...(theme === 'glass' && !config?.branding?.backgroundImageUrl ? getGlassStyle(0.7) : {}),
             background: config?.branding?.backgroundImageUrl
               ? `url(${config.branding.backgroundImageUrl})`
-              : theme === 'glass' 
-                ? 'rgba(255, 255, 255, 0.7)' 
-                : (config?.branding?.chatWindowBgColor || '#ffffff'),
+              : theme !== 'glass' 
+                ? (config?.branding?.chatWindowBgColor || '#ffffff')
+                : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            backdropFilter: theme === 'glass' ? 'blur(20px) saturate(180%)' : undefined,
-            WebkitBackdropFilter: theme === 'glass' ? 'blur(20px) saturate(180%)' : undefined,
-            border: theme === 'minimal' ? '1px solid #e5e7eb' : theme === 'glass' ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
+            border: theme === 'minimal' ? '1px solid #e5e7eb' : 'none',
           }}
         >
           {/* Pre-chat form or Chat Interface */}
@@ -793,15 +869,26 @@ export default function WidgetEmbed() {
                   )}
                   <span className="text-white font-medium">{companyName}</span>
                 </div>
-                <Button
-                  onClick={() => setIsWidgetOpen(false)}
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20 p-1 h-6 w-6"
-                  data-testid="button-close-prechat"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {config?.widgetSettings?.enableLanguageSwitcher && config?.widgetSettings?.supportedLanguages && (
+                    <LanguageSwitcher
+                      languages={config.widgetSettings.supportedLanguages}
+                      currentLanguage={currentLanguage}
+                      onLanguageChange={handleLanguageChange}
+                      primaryColor="#FFFFFF"
+                      compact
+                    />
+                  )}
+                  <Button
+                    onClick={() => setIsWidgetOpen(false)}
+                    size="sm"
+                    variant="ghost"
+                    className="text-white hover:bg-white/20 p-1 h-6 w-6"
+                    data-testid="button-close-prechat"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
                 {theme === 'wave' && <WavePattern color="white" opacity={0.1} />}
               </div>
               
@@ -820,10 +907,10 @@ export default function WidgetEmbed() {
                       />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Welcome to {companyName}
+                      {t.welcomeTo} {companyName}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Please provide your details to start chatting
+                      {t.provideDetails}
                     </p>
                   </div>
                   
@@ -832,7 +919,7 @@ export default function WidgetEmbed() {
                     <div>
                       <Input
                         type="text"
-                        placeholder="Your name"
+                        placeholder={t.yourName}
                         value={userName}
                         onChange={(e) => setUserName(e.target.value)}
                         disabled={isPreChatSubmitting}
@@ -844,7 +931,7 @@ export default function WidgetEmbed() {
                     <div>
                       <Input
                         type="tel"
-                        placeholder="Your phone number"
+                        placeholder={t.yourPhone}
                         value={userPhone}
                         onChange={(e) => setUserPhone(e.target.value)}
                         disabled={isPreChatSubmitting}
@@ -870,10 +957,10 @@ export default function WidgetEmbed() {
                       {isPreChatSubmitting ? (
                         <div className="flex items-center justify-center">
                           <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                          Starting...
+                          {t.starting}
                         </div>
                       ) : (
-                        'Start Chat'
+                        t.startChat
                       )}
                     </Button>
                   </form>
@@ -924,6 +1011,17 @@ export default function WidgetEmbed() {
             </div>
             
             <div className="flex items-center gap-2 relative z-10">
+              {!isMinimized && config?.widgetSettings?.enableLanguageSwitcher && config?.widgetSettings?.supportedLanguages && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <LanguageSwitcher
+                    languages={config.widgetSettings.supportedLanguages}
+                    currentLanguage={currentLanguage}
+                    onLanguageChange={handleLanguageChange}
+                    primaryColor="#FFFFFF"
+                    compact
+                  />
+                </div>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -951,8 +1049,8 @@ export default function WidgetEmbed() {
           
           {!isMinimized && (
             <>
-              {/* Business Hours Notice */}
-              {!isBusinessOpen() && (
+              {/* Business Hours Notice - only show if business hours are enabled */}
+              {config?.businessHours?.enabled && !isBusinessOpen() && (
                 <div className="px-4 py-2 bg-orange-50 text-orange-600 text-sm text-center">
                   {config?.businessHours?.offlineMessage || "We're currently closed."}
                 </div>
@@ -972,16 +1070,16 @@ export default function WidgetEmbed() {
                       <div
                         className={cn(
                           "inline-block max-w-[80%] p-3 rounded-2xl transition-all duration-300",
-                          "hover:scale-[1.02] hover:shadow-lg",
-                          theme === 'glass' && message.role !== "user" && "glass-effect"
+                          "hover:scale-[1.02] hover:shadow-lg"
                         )}
                         style={{
                           ...getMessageStyle(message.role === "user"),
+                          ...(theme === 'glass' && message.role !== "user" ? getGlassStyle(0.8) : {}),
                           borderRadius: theme === 'sleek' ? '8px' : theme === 'minimal' ? '6px' : theme === 'soft' ? '16px' : '18px',
                         }}
                         data-testid={`message-${message.role}-${index}`}
                       >
-                        <p className="text-sm">{message.content}</p>
+                        <MarkdownMessage content={message.content} className="text-sm" />
                         {/* Response Options */}
                         {message.responseOptions && message.responseOptions.length > 0 && (
                           <div className="mt-3 space-y-2 stagger-enter">
@@ -992,10 +1090,10 @@ export default function WidgetEmbed() {
                                 size="sm"
                                 className={cn(
                                   "w-full justify-start text-left widget-button",
-                                  "transition-all duration-300 hover:scale-[1.02]",
-                                  theme === 'glass' && "glass-effect"
+                                  "transition-all duration-300 hover:scale-[1.02]"
                                 )}
                                 style={{
+                                  ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
                                   animationDelay: `${optionIndex * 0.1}s`,
                                   borderColor: primaryColor,
                                   color: primaryColor,
@@ -1004,6 +1102,33 @@ export default function WidgetEmbed() {
                                 data-testid={`button-response-option-${optionIndex}`}
                               >
                                 {option}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Links */}
+                        {message.links && message.links.length > 0 && (
+                          <div className="mt-3 space-y-2 stagger-enter">
+                            {message.links.map((link, linkIndex) => (
+                              <Button
+                                key={linkIndex}
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "w-full justify-start text-left widget-button",
+                                  "transition-all duration-300 hover:scale-[1.02]"
+                                )}
+                                style={{
+                                  ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
+                                  animationDelay: `${linkIndex * 0.1}s`,
+                                  borderColor: primaryColor,
+                                  color: primaryColor,
+                                }}
+                                onClick={() => window.open(link.url, '_blank')}
+                                data-testid={`button-link-${linkIndex}`}
+                              >
+                                🔗 {link.title}
                               </Button>
                             ))}
                           </div>
@@ -1025,10 +1150,13 @@ export default function WidgetEmbed() {
                   {/* Typing Indicator */}
                   {showTyping && (
                     <div className="text-left message-enter">
-                      <div className={cn(
-                        "inline-block p-3 rounded-2xl",
-                        theme === 'glass' ? "glass-effect" : "bg-gray-100"
-                      )}>
+                      <div 
+                        className={cn(
+                          "inline-block p-3 rounded-2xl",
+                          theme !== 'glass' && "bg-gray-100"
+                        )}
+                        style={theme === 'glass' ? getGlassStyle(0.7) : undefined}
+                      >
                         <TypingIndicator primaryColor={config?.branding?.thinkingDotsColor || primaryColor} />
                       </div>
                     </div>
@@ -1047,10 +1175,10 @@ export default function WidgetEmbed() {
                         size="sm"
                         onClick={() => handleSuggestedPrompt(prompt)}
                         className={cn(
-                          "text-xs widget-button transition-all duration-300",
-                          theme === 'glass' && "glass-effect"
+                          "text-xs widget-button transition-all duration-300"
                         )}
                         style={{
+                          ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
                           animationDelay: `${index * 0.1}s`,
                           borderColor: primaryColor,
                           color: primaryColor,
@@ -1065,21 +1193,21 @@ export default function WidgetEmbed() {
               )}
               
               {/* Input area */}
-              <div className={cn(
-                "p-4 border-t",
-                theme === 'glass' && "glass-effect"
-              )}>
+              <div 
+                className="p-4 border-t"
+                style={theme === 'glass' ? getGlassStyle(0.5) : undefined}
+              >
                 <div className="flex gap-2">
                   <Input
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
+                    placeholder={isBusinessOpen() ? t.typeMessage : t.leaveMessage}
                     disabled={isLoading}
                     className={cn(
                       "flex-1 transition-all duration-300",
                       "focus:scale-[1.02] focus:shadow-lg",
-                      theme === 'glass' && "bg-white/50 backdrop-blur-sm",
+                      theme === 'glass' && "bg-white/50 backdrop-blur-sm text-gray-900 placeholder:text-gray-500",
                       theme === 'minimal' && "border-black rounded-none"
                     )}
                     data-testid="input-message"
@@ -1095,6 +1223,7 @@ export default function WidgetEmbed() {
                       boxShadow: theme === 'elevated' ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
                     }}
                     data-testid="button-send"
+                    title={t.send}
                   >
                     <Send className="w-4 h-4" />
                   </Button>

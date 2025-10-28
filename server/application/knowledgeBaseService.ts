@@ -90,35 +90,58 @@ export class KnowledgeBaseService {
         throw new Error("Document not found during processing");
       }
 
-      // Create embeddings and store chunks
-      const chunkPromises = chunks.map(async (chunkText, index) => {
-        try {
-          // Create embedding using OpenAI
-          const embedding = await openaiService.createEmbedding(chunkText);
-          
-          // Store chunk with embedding
-          await storage.createKBChunk({
-            id: nanoid(),
-            documentId,
-            chatbotId: document.chatbotId,
-            chunkIndex: index,
-            text: chunkText,
-            tokenCount: kbService.countTokens(chunkText),
-            embedding: embedding, // This will be stored as vector in PostgreSQL
-            metadata: {
-              filename,
-              contentType,
-              extractedAt: new Date().toISOString()
+      // Process chunks in batches to avoid overwhelming the database and API
+      const BATCH_SIZE = 10; // Process 10 chunks at a time
+      const totalChunks = chunks.length;
+      let processedChunks = 0;
+      
+      console.log(`Processing ${totalChunks} chunks in batches of ${BATCH_SIZE}...`);
+      
+      // Update document with total chunks count
+      await storage.updateKBDocumentProgress(documentId, 0, totalChunks);
+      
+      for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+        const batch = chunks.slice(i, i + BATCH_SIZE);
+        const batchPromises = batch.map(async (chunkText, batchIndex) => {
+          const index = i + batchIndex;
+          try {
+            // Create embedding using OpenAI
+            const embedding = await openaiService.createEmbedding(chunkText);
+            
+            // Store chunk with embedding
+            await storage.createKBChunk({
+              id: nanoid(),
+              documentId,
+              chatbotId: document.chatbotId,
+              chunkIndex: index,
+              text: chunkText,
+              tokenCount: kbService.countTokens(chunkText),
+              embedding: embedding, // This will be stored as vector in PostgreSQL
+              metadata: {
+                filename,
+                contentType,
+                extractedAt: new Date().toISOString()
+              }
+            });
+            
+            processedChunks++;
+            
+            // Update progress every 10 chunks (after each batch)
+            if (processedChunks % BATCH_SIZE === 0 || processedChunks === totalChunks) {
+              await storage.updateKBDocumentProgress(documentId, processedChunks, totalChunks);
+              console.log(`Progress: ${processedChunks}/${totalChunks} chunks processed (${Math.round(processedChunks/totalChunks*100)}%)`);
             }
-          });
-        } catch (error) {
-          console.error(`Failed to process chunk ${index} for document ${documentId}:`, error);
-          throw error;
-        }
-      });
-
-      // Wait for all chunks to be processed
-      await Promise.all(chunkPromises);
+          } catch (error) {
+            console.error(`Failed to process chunk ${index} for document ${documentId}:`, error);
+            throw error;
+          }
+        });
+        
+        // Wait for current batch to complete before starting next batch
+        await Promise.all(batchPromises);
+      }
+      
+      console.log(`All ${totalChunks} chunks processed successfully`);
       
       // Update document status to ready
       await storage.updateKBDocumentStatus(documentId, "ready");
@@ -145,6 +168,34 @@ export class KnowledgeBaseService {
 
       const documents = await storage.getKBDocuments(chatbotId);
       return documents;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get single document status with progress (for polling)
+   */
+  async getDocumentStatus(chatbotId: string, documentId: string) {
+    try {
+      // Check if chatbot exists
+      const chatbot = await storage.getChatbot(chatbotId);
+      if (!chatbot) {
+        throw new Error("Chatbot not found");
+      }
+
+      const document = await storage.getKBDocument(documentId);
+      if (!document) {
+        return null;
+      }
+
+      // Verify document belongs to chatbot
+      const docChatbotId = (document as any).chatbot_id || document.chatbotId;
+      if (docChatbotId !== chatbotId) {
+        throw new Error("Document does not belong to this chatbot");
+      }
+
+      return document;
     } catch (error) {
       throw error;
     }

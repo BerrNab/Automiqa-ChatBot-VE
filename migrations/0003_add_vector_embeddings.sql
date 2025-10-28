@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Add embedding column to kb_chunks table
--- Using vector(1536) for OpenAI's text-embedding-ada-002 which produces 1536-dimensional vectors
+-- Using vector(1536) for OpenAI's text-embedding-3-large which produces 1536-dimensional vectors
 ALTER TABLE kb_chunks 
 ADD COLUMN IF NOT EXISTS embedding vector(1536);
 

@@ -65,6 +65,22 @@ router.get("/admin/chatbots/:chatbotId/kb/documents", requireAdminAuth, async (r
   }
 });
 
+// Get single document status with progress (for polling during processing)
+router.get("/admin/chatbots/:chatbotId/kb/documents/:documentId", requireAdminAuth, async (req, res) => {
+  try {
+    const { chatbotId, documentId } = req.params;
+    const document = await knowledgeBaseService.getDocumentStatus(chatbotId, documentId);
+    
+    if (!document) {
+      return res.status(404).json({ message: "Document not found" });
+    }
+    
+    res.json(document);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Delete a document from knowledge base
 router.delete("/admin/chatbots/:chatbotId/kb/documents/:documentId", requireAdminAuth, async (req, res) => {
   try {

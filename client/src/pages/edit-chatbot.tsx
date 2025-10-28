@@ -109,7 +109,7 @@ export default function EditChatbotPage({ id: propId }: EditChatbotPageProps = {
         title: "Chatbot Updated",
         description: "Chatbot has been updated successfully",
       });
-      setLocation("/admin"); // Navigate back to admin dashboard
+      // Don't redirect - stay on the page so user can continue editing
     },
     onError: (error: Error) => {
       toast({
