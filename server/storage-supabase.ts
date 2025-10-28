@@ -1475,7 +1475,7 @@ export class SupabaseStorage implements IStorage {
           chatbot_id: conversationData.chatbotId,
           session_id: conversationData.sessionId,
           last_message_at: new Date().toISOString()
-        })
+        } as any)
         .select()
         .single();
       
@@ -1524,7 +1524,7 @@ export class SupabaseStorage implements IStorage {
         role: message.role,
         content: message.content,
         metadata: message.metadata || null
-      })
+      } as any)
       .select()
       .single();
     
