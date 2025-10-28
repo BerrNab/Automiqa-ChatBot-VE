@@ -1251,16 +1251,16 @@ export class SupabaseStorage implements IStorage {
       .from('appointments')
       .insert({
         id: nanoid(),
-        chatbot_id: appointment.chatbotId,
-        customer_name: appointment.customerName,
-        customer_email: appointment.customerEmail,
-        customer_phone: appointment.customerPhone || null,
-        appointment_date: appointment.appointmentDate,
-        appointment_time: appointment.appointmentTime,
-        service_type: appointment.serviceType || null,
-        notes: appointment.notes || null,
-        status: appointment.status || 'pending'
-      })
+        chatbot_id: (appointment as any).chatbotId,
+        customer_name: (appointment as any).customerName,
+        customer_email: (appointment as any).customerEmail,
+        customer_phone: (appointment as any).customerPhone || null,
+        appointment_date: (appointment as any).appointmentDate,
+        appointment_time: (appointment as any).appointmentTime,
+        service_type: (appointment as any).serviceType || null,
+        notes: (appointment as any).notes || null,
+        status: (appointment as any).status || 'pending'
+      } as any)
       .select()
       .single();
     
@@ -1291,14 +1291,14 @@ export class SupabaseStorage implements IStorage {
 
   async updateAppointment(id: string, appointmentData: Partial<InsertAppointment>, clientId: string): Promise<Appointment> {
     const updateData: any = {};
-    if (appointmentData.appointmentDate !== undefined) updateData.appointment_date = appointmentData.appointmentDate;
-    if (appointmentData.appointmentTime !== undefined) updateData.appointment_time = appointmentData.appointmentTime;
-    if (appointmentData.status !== undefined) updateData.status = appointmentData.status;
-    if (appointmentData.notes !== undefined) updateData.notes = appointmentData.notes;
+    if ((appointmentData as any).appointmentDate !== undefined) updateData.appointment_date = (appointmentData as any).appointmentDate;
+    if ((appointmentData as any).appointmentTime !== undefined) updateData.appointment_time = (appointmentData as any).appointmentTime;
+    if ((appointmentData as any).status !== undefined) updateData.status = (appointmentData as any).status;
+    if ((appointmentData as any).notes !== undefined) updateData.notes = (appointmentData as any).notes;
     
     const { data, error } = await supabaseAdmin
       .from('appointments')
-      .update(updateData)
+      .update(updateData as any)
       .eq('id', id)
       .select()
       .single();
