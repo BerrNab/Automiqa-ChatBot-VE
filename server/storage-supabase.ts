@@ -1374,15 +1374,15 @@ export class SupabaseStorage implements IStorage {
 
   async updateLead(id: string, leadData: Partial<InsertLead>, clientId: string): Promise<Lead> {
     const updateData: any = {};
-    if (leadData.name !== undefined) updateData.name = leadData.name;
-    if (leadData.email !== undefined) updateData.email = leadData.email;
-    if (leadData.phone !== undefined) updateData.phone = leadData.phone;
-    if (leadData.status !== undefined) updateData.status = leadData.status;
-    if (leadData.notes !== undefined) updateData.notes = leadData.notes;
+    if ((leadData as any).name !== undefined) updateData.name = (leadData as any).name;
+    if ((leadData as any).email !== undefined) updateData.email = (leadData as any).email;
+    if ((leadData as any).phone !== undefined) updateData.phone = (leadData as any).phone;
+    if ((leadData as any).status !== undefined) updateData.status = (leadData as any).status;
+    if ((leadData as any).notes !== undefined) updateData.notes = (leadData as any).notes;
     
     const { data, error } = await supabaseAdmin
       .from('leads')
-      .update(updateData)
+      .update(updateData as any)
       .eq('id', id)
       .select()
       .single();
@@ -1399,7 +1399,7 @@ export class SupabaseStorage implements IStorage {
     
     const { data, error } = await supabaseAdmin
       .from('leads')
-      .update(updateData)
+      .update(updateData as any)
       .eq('id', leadId)
       .select()
       .single();
@@ -1443,8 +1443,8 @@ export class SupabaseStorage implements IStorage {
     const { data: existing } = await supabaseAdmin
       .from('conversations')
       .select('*')
-      .eq('chatbot_id', conversationData.chatbotId)
-      .eq('session_id', conversationData.sessionId)
+      .eq('chatbot_id', (conversationData as any).chatbotId)
+      .eq('session_id', (conversationData as any).sessionId)
       .single();
     
     if (existing) {
@@ -1453,8 +1453,8 @@ export class SupabaseStorage implements IStorage {
         .from('conversations')
         .update({
           last_message_at: new Date().toISOString()
-        })
-        .eq('id', existing.id)
+        } as any)
+        .eq('id', (existing as any).id)
         .select()
         .single();
       
@@ -1462,7 +1462,7 @@ export class SupabaseStorage implements IStorage {
       return data as Conversation;
     } else {
       // Create new conversation - need to get client_id from chatbot
-      const chatbot = await this.getChatbot(conversationData.chatbotId);
+      const chatbot = await this.getChatbot((conversationData as any).chatbotId);
       if (!chatbot) {
         throw new Error('Chatbot not found');
       }
@@ -1472,8 +1472,8 @@ export class SupabaseStorage implements IStorage {
         .insert({
           id: nanoid(),
           client_id: chatbot.clientId || (chatbot as any).client_id,
-          chatbot_id: conversationData.chatbotId,
-          session_id: conversationData.sessionId,
+          chatbot_id: (conversationData as any).chatbotId,
+          session_id: (conversationData as any).sessionId,
           last_message_at: new Date().toISOString()
         } as any)
         .select()
@@ -1520,10 +1520,10 @@ export class SupabaseStorage implements IStorage {
       .from('messages')
       .insert({
         id: nanoid(),
-        conversation_id: message.conversationId,
-        role: message.role,
-        content: message.content,
-        metadata: message.metadata || null
+        conversation_id: (message as any).conversationId,
+        role: (message as any).role,
+        content: (message as any).content,
+        metadata: (message as any).metadata || null
       } as any)
       .select()
       .single();
