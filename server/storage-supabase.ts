@@ -379,8 +379,10 @@ export class SupabaseStorage implements IStorage {
     
     if (error) throw new Error(`Failed to fetch chatbots with clients: ${error.message}`);
     
-    // Get subscriptions for each chatbot's client
+    // Get subscriptions and stats for each chatbot
     const result: ChatbotWithClient[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     for (const chatbot of data || []) {
       // Parse config field
@@ -388,15 +390,46 @@ export class SupabaseStorage implements IStorage {
         chatbot.config = this.parseConfig(chatbot.config);
       }
       
+      // Get subscription
       const { data: subscriptions } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('client_id', chatbot.client_id);
       
+      // Get message count for today
+      const { count: messageCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('chatbot_id', chatbot.id)
+        .gte('created_at', today.toISOString());
+      
+      // Get total conversations and conversations with responses
+      const { count: totalConversations } = await supabase
+        .from('conversations')
+        .select('*', { count: 'exact', head: true })
+        .eq('chatbot_id', chatbot.id);
+      
+      // Count conversations that have at least one assistant message
+      const { data: conversationsWithResponses } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .eq('chatbot_id', chatbot.id)
+        .eq('role', 'assistant');
+      
+      const uniqueConversationsWithResponses = new Set(
+        conversationsWithResponses?.map(m => m.conversation_id) || []
+      ).size;
+      
+      const responseRate = totalConversations && totalConversations > 0
+        ? Math.round((uniqueConversationsWithResponses / totalConversations) * 100)
+        : 0;
+      
       result.push({
         ...chatbot,
         client: chatbot.client,
-        subscription: subscriptions && subscriptions.length > 0 ? subscriptions[0] : null
+        subscription: subscriptions && subscriptions.length > 0 ? subscriptions[0] : null,
+        messageCount: messageCount || 0,
+        responseRate: responseRate
       } as ChatbotWithClient);
     }
     
