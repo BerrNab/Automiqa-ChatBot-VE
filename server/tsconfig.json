@@ -9,6 +9,10 @@
     "strict": false,
     "noEmit": true,
     "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictPropertyInitialization": false,
     "baseUrl": "..",
     "paths": {
       "@shared/*": ["./shared/*"]

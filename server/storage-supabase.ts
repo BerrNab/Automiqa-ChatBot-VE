@@ -1322,17 +1322,17 @@ export class SupabaseStorage implements IStorage {
       .from('leads')
       .insert({
         id: nanoid(),
-        client_id: lead.clientId,
-        chatbot_id: lead.chatbotId,
-        name: lead.name || null,
-        email: lead.email || null,
-        phone: lead.phone || null,
-        message: lead.message || null,
-        status: lead.status || 'new',
-        source: lead.source || 'widget',
-        conversation_id: lead.conversationId || null,
-        notes: lead.notes || null
-      })
+        client_id: (lead as any).clientId,
+        chatbot_id: (lead as any).chatbotId,
+        name: (lead as any).name || null,
+        email: (lead as any).email || null,
+        phone: (lead as any).phone || null,
+        message: (lead as any).message || null,
+        status: (lead as any).status || 'new',
+        source: (lead as any).source || 'widget',
+        conversation_id: (lead as any).conversationId || null,
+        notes: (lead as any).notes || null
+      } as any)
       .select()
       .single();
     
