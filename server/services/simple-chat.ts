@@ -76,6 +76,7 @@ Format it EXACTLY like this (use the actual item names from the results):
 [Short item 1 name (max 6 words)]
 [Short item 2 name (max 6 words)]
 [Short item 3 name (max 6 words)]
+[If more items available, add "More..." in user's lang, as the last option]
 ---END_PROMPTS---
 
 CRITICAL RULES:

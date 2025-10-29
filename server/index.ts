@@ -1,36 +1,49 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
-import config, { validateEnv } from "./config";
+import config, { validateEnv } from "./config.js";
+import { supabaseStorage as storage } from "./storage-supabase.js";
+import { authRoutes, configureAuth } from "./routes/auth.js";
+import { adminDashboardRoutes } from "./routes/admin-dashboard.js";
+import { clientRoutes } from "./routes/clients.js";
+import { chatbotsRoutes } from "./routes/chatbots.js";
+import { subscriptionRoutes } from "./routes/subscriptions.js";
+import { widgetRoutes } from "./routes/widgets.js";
+import { paymentRoutes } from "./routes/payments.js";
+import { clientDashboardRoutes } from "./routes/client-dashboard.js";
+import { knowledgeBaseRoutes } from "./routes/knowledge-base.js";
+import { emailNotificationRoutes } from "./routes/email-notifications.js";
 
 // Simple logger
 const log = (message: string) => {
   const timestamp = new Date().toLocaleTimeString();
   console.log(`${timestamp} [express] ${message}`);
 };
-import { supabaseStorage as storage } from "./storage-supabase";
-import { authRoutes, configureAuth } from "./routes/auth";
-import { adminDashboardRoutes } from "./routes/admin-dashboard";
-import { clientRoutes } from "./routes/clients";
-import { chatbotsRoutes } from "./routes/chatbots";
-import { subscriptionRoutes } from "./routes/subscriptions";
-import { widgetRoutes } from "./routes/widgets";
-import { paymentRoutes } from "./routes/payments";
-import { clientDashboardRoutes } from "./routes/client-dashboard";
-import { knowledgeBaseRoutes } from "./routes/knowledge-base";
-import { emailNotificationRoutes } from "./routes/email-notifications";
-
 // Validate environment variables
 validateEnv();
 
 const app = express();
 
-// CORS middleware for separate frontend deployment
 app.use((req, res, next) => {
-  // const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-  res.header('Access-Control-Allow-Origin', "*");
-  res.header('Access-Control-Allow-Credentials', 'true');
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'https://automiqa-chat-bot-ve-3z7o.vercel.app/',
+    'http://automiqa-chat-bot-ve-3z7o.vercel.app/'
+  ];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+  res.header('Access-Control-Expose-Headers', 'Set-Cookie');
   
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
@@ -82,10 +95,10 @@ export async function setupApp() {
     });
   });
 
-  // Configure authentication and session middleware first
+  // Configure authentication (Passport strategies)
   configureAuth(app);
-
-  // Register API routes BEFORE Vite middleware
+  
+  // Register API routes
   app.use("/api", authRoutes);
   app.use("/api", adminDashboardRoutes);
   app.use("/api", clientRoutes);
