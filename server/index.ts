@@ -73,6 +73,15 @@ app.use((req, res, next) => {
 
 // Setup app function for both local and serverless
 export async function setupApp() {
+  // Health check endpoint (no auth required)
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || "development"
+    });
+  });
+
   // Configure authentication and session middleware first
   configureAuth(app);
 
@@ -100,21 +109,13 @@ export async function setupApp() {
   return app;
 }
 
-// Export app for Vercel
-export { app };
+// Create HTTP server
+const server = createServer(app);
 
-// Only run server if not in Vercel environment
-if (process.env.VERCEL !== '1') {
-  (async () => {
-    // Create HTTP server
-    const server = createServer(app);
+await setupApp();
 
-    await setupApp();
-
-    // Start server
-    const port = config.port;
-    server.listen(port, "0.0.0.0", () => {
-      log(`API server running on http://localhost:${port}`);
-    });
-  })();
-}
+// Start server
+const port = config.port;
+server.listen(port, () => {
+  log(`API server running on http://localhost:${port}`);
+});
