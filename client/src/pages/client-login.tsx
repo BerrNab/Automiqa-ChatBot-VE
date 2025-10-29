@@ -36,11 +36,16 @@ export default function ClientLogin() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Save access token to localStorage
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+      }
+      
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${data.user.name}`,
+        description: "Welcome to your dashboard",
       });
-      setLocation("/client/dashboard");
+      setLocation("/client");
     },
     onError: (error: Error) => {
       toast({

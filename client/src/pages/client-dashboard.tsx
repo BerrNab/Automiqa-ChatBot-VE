@@ -119,6 +119,7 @@ export default function ClientDashboard() {
       return response.json();
     },
     onSuccess: () => {
+      localStorage.removeItem('access_token');
       queryClient.clear();
       toast({
         title: "Logged Out",

@@ -20,9 +20,15 @@ export function configureAuth(app: any) {
     throw new Error("SESSION_SECRET environment variable must be set with a strong, unique value");
   }
 
-  // PostgreSQL session store configuration
+  // PostgreSQL session store configuration - DISABLED due to DNS issues
+  // Using memory sessions for now
   let pgPool: pg.Pool | undefined = undefined;
   
+  console.warn("⚠️  PostgreSQL sessions disabled - using memory store");
+  console.log('💡 Sessions will be lost on server restart');
+  
+  // Uncomment below to re-enable PostgreSQL sessions when DNS is fixed:
+  /*
   const connectionString = config.databaseUrl || process.env.DATABASE_URL;
   
   if (!connectionString) {
@@ -34,7 +40,7 @@ export function configureAuth(app: any) {
         connectionString: connectionString,
         ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
         connectionTimeoutMillis: 5000,
-        max: 20, // Maximum pool size
+        max: 20,
         idleTimeoutMillis: 30000,
       });
       
@@ -49,6 +55,7 @@ export function configureAuth(app: any) {
       pgPool = undefined;
     }
   }
+  */
 
   // Session configuration with PostgreSQL store (if available)
   const sessionConfig: any = {

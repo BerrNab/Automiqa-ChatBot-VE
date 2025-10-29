@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import config, { validateEnv } from "./config.js";
 import { supabaseStorage as storage } from "./storage-supabase.js";
-import { authRoutes, configureAuth } from "./routes/auth.js";
+import { supabaseAuthRoutes } from "./routes/supabase-auth.js";
 import { adminDashboardRoutes } from "./routes/admin-dashboard.js";
 import { clientRoutes } from "./routes/clients.js";
 import { chatbotsRoutes } from "./routes/chatbots.js";
@@ -91,11 +91,8 @@ export async function setupApp() {
     });
   });
 
-  // Configure authentication (Passport strategies)
-  configureAuth(app);
-  
-  // Register API routes
-  app.use("/api", authRoutes);
+  // Register API routes (Supabase Auth - no session config needed)
+  app.use("/api", supabaseAuthRoutes);
   app.use("/api", adminDashboardRoutes);
   app.use("/api", clientRoutes);
   app.use("/api", chatbotsRoutes);

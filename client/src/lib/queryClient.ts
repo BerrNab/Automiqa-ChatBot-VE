@@ -20,6 +20,12 @@ export async function apiRequest(
   const headers: Record<string, string> = {};
   let body: any = undefined;
   
+  // Add Authorization header if token exists
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
   if (data) {
     if (data instanceof FormData) {
       // Let the browser handle the Content-Type for FormData
@@ -36,7 +42,6 @@ export async function apiRequest(
     method,
     headers,
     body,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
@@ -51,8 +56,16 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
     const fullUrl = API_BASE_URL + url;
+    
+    // Add Authorization header if token exists
+    const headers: Record<string, string> = {};
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(fullUrl, {
-      credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

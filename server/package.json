@@ -12,7 +12,7 @@
     "db:migrate": "node ../scripts/migrate-db.js",
     "db:seed": "node ../scripts/seed-db.js",
     "db:init-functions": "node ../scripts/init-supabase-functions.js",
-    "create:admin": "node ../scripts/create-admin.js"
+    "create:admin": "node create-admin.js"
   },
   "dependencies": {
     "@langchain/core": "^0.3.78",
@@ -20,7 +20,7 @@
     "@langchain/textsplitters": "^0.1.0",
     "@neondatabase/serverless": "^0.10.4",
     "@sendgrid/mail": "^8.1.5",
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "^2.77.0",
     "@types/bcrypt": "^6.0.0",
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^7.0.1",

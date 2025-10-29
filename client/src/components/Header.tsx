@@ -16,14 +16,19 @@ export default function Header({ title, subtitle }: HeaderProps) {
       await auth.logout();
     },
     onSuccess: () => {
+      // Clear access token from localStorage
+      localStorage.removeItem('access_token');
+      
       toast({
         title: "Logged out",
-        description: "You have been logged out successfully",
+        description: "You have been successfully logged out",
       });
-      // Redirect to login page
-      window.location.href = "/admin";
+      window.location.href = "/admin-login";
     },
     onError: (error: any) => {
+      // Clear token even on error
+      localStorage.removeItem('access_token');
+      
       toast({
         title: "Logout failed",
         description: error.message || "Failed to logout. Please try again.",
