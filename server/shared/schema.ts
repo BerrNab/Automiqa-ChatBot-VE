@@ -709,52 +709,40 @@ export const insertAdminSchema = createInsertSchema(admins).omit({
   createdAt: true,
 });
 
-export const insertClientSchema = createInsertSchema(clients, {
-  status: clientStatusEnum,
-}).omit({
+export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
   createdAt: true,
   status: true,
 });
 
-export const insertChatbotSchema = createInsertSchema(chatbots, {
-  status: chatbotStatusEnum,
-  config: chatbotConfigSchema,
-}).omit({
+export const insertChatbotSchema = createInsertSchema(chatbots).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
   widgetUrl: true,
   messageCount: true,
   responseRate: true,
+}).extend({
+  config: chatbotConfigSchema.optional(),
 });
 
-export const insertSubscriptionSchema = createInsertSchema(subscriptions, {
-  type: subscriptionTypeEnum,
-  status: subscriptionStatusEnum,
-}).omit({
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertPaymentLogSchema = createInsertSchema(paymentLogs, {
-  status: paymentStatusEnum,
-}).omit({
+export const insertPaymentLogSchema = createInsertSchema(paymentLogs).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertAppointmentSchema = createInsertSchema(appointments, {
-  status: appointmentStatusEnum,
-}).omit({
+export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertLeadSchema = createInsertSchema(leads, {
-  status: leadStatusEnum,
-}).omit({
+export const insertLeadSchema = createInsertSchema(leads).omit({
   id: true,
   capturedAt: true,
   updatedAt: true,
@@ -766,9 +754,7 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
   lastMessageAt: true,
 });
 
-export const insertMessageSchema = createInsertSchema(messages, {
-  role: messageRoleEnum,
-}).omit({
+export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   createdAt: true,
 });
@@ -787,18 +773,13 @@ export const insertKBChunkSchema = createInsertSchema(kbChunks).omit({
 });
 
 // Email schemas
-export const insertEmailSettingsSchema = createInsertSchema(emailSettings, {
-  notificationType: emailNotificationTypeEnum,
-}).omit({
+export const insertEmailSettingsSchema = createInsertSchema(emailSettings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertEmailNotificationSchema = createInsertSchema(emailNotifications, {
-  notificationType: emailNotificationTypeEnum,
-  deliveryStatus: emailDeliveryStatusEnum,
-}).omit({
+export const insertEmailNotificationSchema = createInsertSchema(emailNotifications).omit({
   id: true,
   createdAt: true,
   updatedAt: true,

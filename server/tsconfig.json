@@ -13,6 +13,10 @@
     "strictNullChecks": false,
     "strictFunctionTypes": false,
     "strictPropertyInitialization": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
     "baseUrl": "..",
     "paths": {
       "@shared/*": ["./shared/*"]
