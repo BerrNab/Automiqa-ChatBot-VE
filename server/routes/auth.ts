@@ -20,25 +20,22 @@ export function configureAuth(app: any) {
     throw new Error("SESSION_SECRET environment variable must be set with a strong, unique value");
   }
 
-  // TODO: Enable PostgreSQL session store once DATABASE_URL is fixed
-  // For now, using memory store with improved cookie settings
-  console.log('⚠️  Using memory session store (sessions will be lost on server restart)');
-  console.log('💡 To enable persistent sessions, set a valid DATABASE_URL in .env');
-  
+  // PostgreSQL session store configuration
   let pgPool: pg.Pool | undefined = undefined;
   
-  // Uncomment below to enable PostgreSQL session store:
-  /*
   const connectionString = config.databaseUrl || process.env.DATABASE_URL;
   
   if (!connectionString) {
     console.warn("⚠️  No DATABASE_URL found. Session store will use memory");
+    console.log('💡 Set DATABASE_URL in .env for persistent sessions');
   } else {
     try {
       pgPool = new pg.Pool({
         connectionString: connectionString,
-        ssl: { rejectUnauthorized: false },
+        ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
         connectionTimeoutMillis: 5000,
+        max: 20, // Maximum pool size
+        idleTimeoutMillis: 30000,
       });
       
       pgPool.on('error', (err) => {
@@ -48,10 +45,10 @@ export function configureAuth(app: any) {
       console.log('✅ PostgreSQL session store configured');
     } catch (error: any) {
       console.error('⚠️  Failed to create PostgreSQL pool:', error.message);
+      console.warn('⚠️  Falling back to memory session store');
       pgPool = undefined;
     }
   }
-  */
 
   // Session configuration with PostgreSQL store (if available)
   const sessionConfig: any = {
@@ -62,8 +59,9 @@ export function configureAuth(app: any) {
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (increased from 24 hours)
-      sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility with refreshes
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // 'none' required for cross-origin in production
+      domain: process.env.NODE_ENV === "production" ? undefined : undefined, // Let browser handle domain
     },
     rolling: true, // Reset maxAge on every response to keep active sessions alive
   };
