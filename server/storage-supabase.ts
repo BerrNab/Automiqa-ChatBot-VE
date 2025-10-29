@@ -1270,7 +1270,7 @@ export class SupabaseStorage implements IStorage {
 
   async getAppointmentsByClientId(clientId: string): Promise<AppointmentWithClient[]> {
     const { data, error } = await supabaseAdmin
-      .from('appointments')
+      .from('appointments') 
       .select(`
         *,
         chatbot:chatbots(
