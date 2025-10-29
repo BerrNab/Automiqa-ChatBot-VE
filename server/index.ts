@@ -22,9 +22,6 @@ import { emailNotificationRoutes } from "./routes/email-notifications";
 // Validate environment variables
 validateEnv();
 
-// Initialize storage
-log('Using Supabase storage implementation');
-
 const app = express();
 
 // CORS middleware for separate frontend deployment
