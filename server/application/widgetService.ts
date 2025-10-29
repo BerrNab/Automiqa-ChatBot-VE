@@ -1,11 +1,11 @@
 import express from "express";
-import { supabaseStorage as storage } from "../storage-supabase";
-import { widgetService as originalWidgetService } from "../services/widget";
-import { openaiService } from "../services/openai";
-import { mcpService } from "../services/mcp";
-import { langchainAgentService } from "../services/langchain-agent";
-import { chatbotConfigSchema } from "../shared/schema";
-import type { InsertLead } from "../shared/schema";
+import { supabaseStorage as storage } from "../storage-supabase.js";
+import { widgetService as originalWidgetService } from "../services/widget.js";
+import { openaiService } from "../services/openai.js";
+import { mcpService } from "../services/mcp.js";
+import { langchainAgentService } from "../services/langchain-agent.js";
+import { chatbotConfigSchema } from "../shared/schema.js";
+import type { InsertLead } from "../shared/schema.js";
 
 interface ChatResponse {
   message: string;

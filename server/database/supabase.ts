@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import config from '../config';
-import type { Database } from './types';
+import config from '../config.js';
+import type { Database } from './types.js';
 
 // Create a single supabase client for interacting with your database
 const supabaseUrl = config.supabaseUrl || '';

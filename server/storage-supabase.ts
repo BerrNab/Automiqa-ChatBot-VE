@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from './database/supabase';
+import { supabase, supabaseAdmin } from './database/supabase.js';
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import type {

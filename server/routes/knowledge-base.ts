@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
-import { requireAdminAuth } from "../middleware/auth";
-import { knowledgeBaseService } from "../application/knowledgeBaseService";
+import { requireAdminAuth } from "../middleware/auth.js";
+import { knowledgeBaseService } from "../application/knowledgeBaseService.js";
 
 const router = Router();
 

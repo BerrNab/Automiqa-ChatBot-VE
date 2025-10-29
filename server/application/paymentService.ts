@@ -1,4 +1,4 @@
-import { supabaseStorage as storage } from "../storage-supabase";
+import { supabaseStorage as storage } from "../storage-supabase.js";
 
 export class PaymentService {
   /**

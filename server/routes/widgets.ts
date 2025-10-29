@@ -1,7 +1,7 @@
 import { Router } from "express";
 import express from "express";
-import { requireAdminAuth } from "../middleware/auth";
-import { widgetApplicationService } from "../application/widgetService";
+import { requireAdminAuth } from "../middleware/auth.js";
+import { widgetApplicationService } from "../application/widgetService.js";
 
 const router = Router();
 

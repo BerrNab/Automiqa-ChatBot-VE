@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireAdminAuth } from "../middleware/auth";
-import { supabaseStorage as storage } from "../storage-supabase";
+import { requireAdminAuth } from "../middleware/auth.js";
+import { supabaseStorage as storage } from "../storage-supabase.js";
 
 const router = Router();
 

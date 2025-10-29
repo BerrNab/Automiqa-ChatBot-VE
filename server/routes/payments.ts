@@ -1,7 +1,7 @@
 import { Router } from "express";
 import express from "express";
-import { requireAdminAuth } from "../middleware/auth";
-import { paymentService } from "../application/paymentService";
+import { requireAdminAuth } from "../middleware/auth.js";
+import { paymentService } from "../application/paymentService.js";
 
 const router = Router();
 

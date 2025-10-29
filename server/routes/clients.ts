@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireAdminAuth } from "../middleware/auth";
-import { clientService } from "../application/clientService";
+import { requireAdminAuth } from "../middleware/auth.js";
+import { clientService } from "../application/clientService.js";
 
 const router = Router();
 

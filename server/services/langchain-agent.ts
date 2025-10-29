@@ -4,10 +4,10 @@ import { AgentExecutor, createOpenAIFunctionsAgent } from "langchain/agents";
 import { BufferMemory, ChatMessageHistory } from "langchain/memory";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { supabaseStorage as storage } from "../storage-supabase";
-import { openaiService } from "./openai";
-import { mcpService } from "./mcp";
-import type { ChatbotConfig } from "../shared/schema";
+import { supabaseStorage as storage } from "../storage-supabase.js";
+import { openaiService } from "./openai.js";
+import { mcpService } from "./mcp.js";
+import type { ChatbotConfig } from "../shared/schema.js";
 
 interface ConversationContext {
   chatbotId: string;

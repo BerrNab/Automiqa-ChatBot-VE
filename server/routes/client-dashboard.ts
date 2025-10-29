@@ -1,8 +1,8 @@
 import { Router } from "express";
 import express from "express";
-import { requireClientAuth } from "../middleware/auth";
-import { leadService } from "../application/leadService";
-import { supabaseStorage as storage } from "../storage-supabase";
+import { requireClientAuth } from "../middleware/auth.js";
+import { leadService } from "../application/leadService.js";
+import { supabaseStorage as storage } from "../storage-supabase.js";
 
 const router = Router();
 

@@ -1,7 +1,7 @@
-import { supabaseStorage as storage } from "../storage-supabase";
-import { kbService } from "../services/knowledge-base";
-import { supabaseService } from "../services/supabase";
-import { openaiService } from "../services/openai";
+import { supabaseStorage as storage } from "../storage-supabase.js";
+import { kbService } from "../services/knowledge-base.js";
+import { supabaseService } from "../services/supabase.js";
+import { openaiService } from "../services/openai.js";
 import { nanoid } from "nanoid";
 
 export class KnowledgeBaseService {

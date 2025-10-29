@@ -1,11 +1,11 @@
 // Email notification API routes
 import { Router } from "express";
 import { z } from "zod";
-import { supabaseStorage as storage } from "../storage-supabase";
-import { notificationService } from "../services/notifications";
-import { emailService } from "../services/email";
-import { insertEmailSettingsSchema, insertEmailNotificationSchema } from "../shared/schema";
-import { requireAdminAuth } from "../middleware/auth";
+import { supabaseStorage as storage } from "../storage-supabase.js";
+import { notificationService } from "../services/notifications.js";
+import { emailService } from "../services/email.js";
+import { insertEmailSettingsSchema, insertEmailNotificationSchema } from "../shared/schema.js";
+import { requireAdminAuth } from "../middleware/auth.js";
 
 export const emailNotificationRoutes = Router();
 

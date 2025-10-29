@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
-import { requireAdminAuth } from "../middleware/auth";
-import { chatbotService } from "../application/chatbotService";
+import { requireAdminAuth } from "../middleware/auth.js";
+import { chatbotService } from "../application/chatbotService.js";
 
 const router = Router();
 

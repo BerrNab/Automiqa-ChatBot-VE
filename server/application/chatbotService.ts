@@ -1,7 +1,7 @@
-import { supabaseStorage as storage } from "../storage-supabase";
-import { insertChatbotSchema } from "../shared/schema";
-import { widgetService } from "../services/widget";
-import { supabaseService } from "../services/supabase";
+import { supabaseStorage as storage } from "../storage-supabase.js";
+import { insertChatbotSchema } from "../shared/schema.js";
+import { widgetService } from "../services/widget.js";
+import { supabaseService } from "../services/supabase.js";
 
 export class ChatbotService {
   /**

@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from './supabase';
+import { supabase, supabaseAdmin } from './supabase.js';
 import { nanoid } from 'nanoid';
 
 // Generic database service with common CRUD operations

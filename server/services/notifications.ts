@@ -1,6 +1,6 @@
 // Email notification scheduler and trigger logic
-import { emailService, type EmailNotificationType, type EmailTemplateData } from './email';
-import { supabaseStorage as storage } from '../storage-supabase';
+import { emailService, type EmailNotificationType, type EmailTemplateData } from './email.js';
+import { supabaseStorage as storage } from '../storage-supabase.js';
 import type { 
   Subscription, 
   SubscriptionWithClient, 

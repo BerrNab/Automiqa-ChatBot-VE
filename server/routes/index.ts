@@ -1,16 +1,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { authRoutes, configureAuth } from "./auth";
-import { adminDashboardRoutes } from "./admin-dashboard";
-import { clientRoutes } from "./clients";
-import { chatbotRoutes } from "./chatbots";
-import { subscriptionRoutes } from "./subscriptions";
-import { widgetRoutes } from "./widgets";
-import { paymentRoutes } from "./payments";
-import { clientDashboardRoutes } from "./client-dashboard";
-import { knowledgeBaseRoutes } from "./knowledge-base";
-import { emailNotificationRoutes } from "./email-notifications";
-import { debugRoutes } from "./debug";
+import { authRoutes, configureAuth } from "./auth.js";
+import { adminDashboardRoutes } from "./admin-dashboard.js";
+import { clientRoutes } from "./clients.js";
+import { chatbotRoutes } from "./chatbots.js";
+import { subscriptionRoutes } from "./subscriptions.js";
+import { widgetRoutes } from "./widgets.js";
+import { paymentRoutes } from "./payments.js";
+import { clientDashboardRoutes } from "./client-dashboard.js";
+import { knowledgeBaseRoutes } from "./knowledge-base.js";
+import { emailNotificationRoutes } from "./email-notifications.js";
+import { debugRoutes } from "./debug.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure authentication and session middleware first
