@@ -28,8 +28,8 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'https://automiqa-chat-bot-ve-3z7o.vercel.app/',
-    'http://automiqa-chat-bot-ve-3z7o.vercel.app/'
+    'https://automiqa-chat-bot-ve-3z7o.vercel.app',
+    'http://automiqa-chat-bot-ve-3z7o.vercel.app'
   ];
   
   if (origin && allowedOrigins.includes(origin)) {
