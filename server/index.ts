@@ -118,13 +118,17 @@ export async function setupApp() {
   return app;
 }
 
-// Create HTTP server
-const server = createServer(app);
-
+// Initialize app for Vercel
 await setupApp();
 
-// Start server
-const port = config.port;
-server.listen(port, () => {
-  log(`API server running on http://localhost:${port}`);
-});
+// Export for Vercel serverless
+export default app;
+
+// Only start server if not in Vercel environment
+if (!process.env.VERCEL) {
+  const server = createServer(app);
+  const port = config.port;
+  server.listen(port, () => {
+    log(`API server running on http://localhost:${port}`);
+  });
+}
