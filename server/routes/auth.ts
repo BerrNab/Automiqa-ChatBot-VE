@@ -3,9 +3,9 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { requireAuth, requireAdminAuth, requireClientAuth } from "../middleware/auth";
-import { authService } from "../application/authService";
-import config from "../config";
+import { requireAuth, requireAdminAuth, requireClientAuth } from "../middleware/auth.js";
+import { authService } from "../application/authService.js";
+import config from "../config.js";
 import pg from "pg";
 
 const router = Router();
