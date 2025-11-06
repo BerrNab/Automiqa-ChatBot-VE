@@ -9,10 +9,11 @@ import ChatbotsTab from "@/components/ChatbotsTab";
 import SubscriptionsTab from "@/components/SubscriptionsTab";
 import WidgetsTab from "@/components/WidgetsTab";
 import PaymentsTab from "@/components/PaymentsTab";
+import PluginsTab from "@/components/PluginsTab";
 import CreateChatbot from "@/pages/create-chatbot";
 import EditChatbot from "@/pages/edit-chatbot";
 
-export type TabType = "dashboard" | "clients" | "chatbots" | "subscriptions" | "widgets" | "payments";
+export type TabType = "dashboard" | "clients" | "chatbots" | "subscriptions" | "widgets" | "payments" | "plugins";
 
 export default function AdminDashboard({ params }: { params?: { id?: string } } = {}) {
   // Log the params for debugging
@@ -91,7 +92,11 @@ export default function AdminDashboard({ params }: { params?: { id?: string } } 
     },
     payments: {
       title: "Payment Tracking",
-      subtitle: "Monitor payments and transaction history"
+      subtitle: "Track payment transactions and revenue"
+    },
+    plugins: {
+      title: "Plugin Manager",
+      subtitle: "Create and manage chatbot plugins"
     }
   };
 
@@ -124,6 +129,8 @@ export default function AdminDashboard({ params }: { params?: { id?: string } } 
         return <WidgetsTab />;
       case "payments":
         return <PaymentsTab />;
+      case "plugins":
+        return <PluginsTab />;
       default:
         return <DashboardTab />;
     }

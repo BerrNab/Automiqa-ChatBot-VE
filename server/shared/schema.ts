@@ -63,7 +63,7 @@ export const chatbotConfigSchema = z.object({
     ]).default("professional"),
     customInstructions: z.string()
       .min(1, "Custom instructions cannot be empty")
-      .max(2000, "Custom instructions too long")
+      .max(10000, "Custom instructions too long")
       .default(DEFAULT_CUSTOM_INSTRUCTIONS),
     mainLanguage: z.string()
       .min(2, "Language code must be at least 2 characters")
@@ -885,6 +885,196 @@ export type ClientPortalStatus = z.infer<typeof clientPortalStatusSchema>;
 
 export type KBDocumentWithChunks = KBDocument & {
   chunks: KBChunk[];
+};
+
+// Plugin Manager Tables
+
+// Plugin templates table - stores plugin definitions created by admin
+export const pluginTemplates = pgTable("plugin_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  version: varchar("version", { length: 50 }).default("1.0.0"),
+  config_schema: jsonb("config_schema").default({}).notNull(),
+  api_configuration: jsonb("api_configuration").default({}).notNull(),
+  input_schema: jsonb("input_schema").default({}).notNull(),
+  output_schema: jsonb("output_schema").default({}).notNull(),
+  category: varchar("category", { length: 100 }).default("general"),
+  tags: text("tags").array().default({}),
+  documentation_url: text("documentation_url"),
+  is_active: boolean("is_active").default(true).notNull(),
+  is_public: boolean("is_public").default(true).notNull(),
+  created_by: varchar("created_by").notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    category_idx: index("plugin_templates_category_idx").on(table.category),
+    is_active_idx: index("plugin_templates_is_active_idx").on(table.is_active),
+    is_public_idx: index("plugin_templates_is_public_idx").on(table.is_public),
+    created_at_idx: index("plugin_templates_created_at_idx").on(table.created_at),
+  };
+});
+
+// Chatbot plugin instances table - stores client-specific plugin configurations
+export const chatbotPlugins = pgTable("chatbot_plugins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  chatbot_id: varchar("chatbot_id").references(() => chatbots.id, { onDelete: "cascade" }).notNull(),
+  plugin_template_id: varchar("plugin_template_id").references(() => pluginTemplates.id, { onDelete: "cascade" }).notNull(),
+  config: jsonb("config").default({}).notNull(),
+  is_enabled: boolean("is_enabled").default(false).notNull(),
+  trigger_rules: jsonb("trigger_rules").default({}).notNull(),
+  settings: jsonb("settings").default({}).notNull(),
+  usage_count: integer("usage_count").default(0).notNull(),
+  last_used_at: timestamp("last_used_at"),
+  configured_by: varchar("configured_by").references(() => clients.id),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    chatbot_id_idx: index("chatbot_plugins_chatbot_id_idx").on(table.chatbot_id),
+    plugin_template_id_idx: index("chatbot_plugins_plugin_template_id_idx").on(table.plugin_template_id),
+    is_enabled_idx: index("chatbot_plugins_is_enabled_idx").on(table.is_enabled),
+    created_at_idx: index("chatbot_plugins_created_at_idx").on(table.created_at),
+    // Ensure unique plugin per chatbot
+    chatbot_plugin_unique_idx: uniqueIndex("chatbot_plugins_chatbot_plugin_unique_idx").on(table.chatbot_id, table.plugin_template_id),
+  };
+});
+
+// Plugin execution logs table - tracks plugin executions and results
+export const pluginExecutionLogs = pgTable("plugin_execution_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  chatbot_plugin_id: varchar("chatbot_plugin_id").references(() => chatbotPlugins.id, { onDelete: "cascade" }).notNull(),
+  conversation_id: varchar("conversation_id").references(() => conversations.id, { onDelete: "cascade" }),
+  input_data: jsonb("input_data").default({}).notNull(),
+  output_data: jsonb("output_data").default({}).notNull(),
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  started_at: timestamp("started_at").defaultNow().notNull(),
+  completed_at: timestamp("completed_at"),
+  execution_duration_ms: integer("execution_duration_ms"),
+  error_message: text("error_message"),
+  error_details: jsonb("error_details"),
+  metadata: jsonb("metadata").default({}),
+}, (table) => {
+  return {
+    chatbot_plugin_id_idx: index("plugin_execution_logs_chatbot_plugin_id_idx").on(table.chatbot_plugin_id),
+    conversation_id_idx: index("plugin_execution_logs_conversation_id_idx").on(table.conversation_id),
+    status_idx: index("plugin_execution_logs_status_idx").on(table.status),
+    started_at_idx: index("plugin_execution_logs_started_at_idx").on(table.started_at),
+  };
+});
+
+// Plugin Manager Validation Enums
+export const pluginStatusEnum = z.enum(["pending", "success", "error", "timeout"]);
+export const pluginCategoryEnum = z.enum(["integration", "automation", "communication", "data", "general"]);
+
+// Plugin Manager Validation Schemas
+export const pluginTemplateSchema = z.object({
+  name: z.string().min(1, "Name is required").max(255, "Name too long"),
+  description: z.string().optional(),
+  version: z.string().default("1.0.0"),
+  configSchema: z.record(z.any()).default({}),
+  apiConfiguration: z.record(z.any()).default({}),
+  inputSchema: z.record(z.any()).default({}),
+  outputSchema: z.record(z.any()).optional(),
+  category: pluginCategoryEnum.default("general"),
+  tags: z.array(z.string()).default([]),
+  documentationUrl: z.string().url().optional(),
+  isActive: z.boolean().default(true),
+  isPublic: z.boolean().default(true),
+});
+
+export const chatbotPluginSchema = z.object({
+  chatbotId: z.string().min(1, "Chatbot ID is required"),
+  pluginTemplateId: z.string().min(1, "Plugin template ID is required"),
+  config: z.record(z.any()).default({}),
+  isEnabled: z.boolean().default(false),
+  triggerRules: z.record(z.any()).default({}),
+  settings: z.record(z.any()).default({}),
+});
+
+export const pluginExecutionLogSchema = z.object({
+  chatbotPluginId: z.string().min(1, "Chatbot plugin ID is required"),
+  conversationId: z.string().optional(),
+  inputData: z.record(z.any()).default({}),
+  outputData: z.record(z.any()).default({}),
+  status: pluginStatusEnum.default("pending"),
+  executionDurationMs: z.number().optional(),
+  errorMessage: z.string().optional(),
+  errorDetails: z.record(z.any()).optional(),
+  metadata: z.record(z.any()).default({}),
+});
+
+// Trigger Rules Schema
+export const triggerRulesSchema = z.object({
+  keywords: z.array(z.string()).default([]),
+  messageCount: z.number().min(1).optional(),
+  userIntent: z.string().optional(),
+  timeConditions: z.object({
+    businessHoursOnly: z.boolean().default(false),
+    timezone: z.string().optional(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+  }).optional(),
+  conversationPatterns: z.object({
+    containsEmail: z.boolean().default(false),
+    containsPhone: z.boolean().default(false),
+    containsUrl: z.boolean().default(false),
+    minMessageLength: z.number().optional(),
+    maxMessageLength: z.number().optional(),
+  }).optional(),
+  customConditions: z.record(z.any()).optional(),
+});
+
+// Plugin Manager Insert Schemas
+export const insertPluginTemplateSchema = createInsertSchema(pluginTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  createdBy: true,
+}).extend(pluginTemplateSchema.shape);
+
+export const insertChatbotPluginSchema = createInsertSchema(chatbotPlugins).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  usageCount: true,
+  lastUsedAt: true,
+  configuredBy: true,
+}).extend(chatbotPluginSchema.shape);
+
+export const insertPluginExecutionLogSchema = createInsertSchema(pluginExecutionLogs).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+}).extend(pluginExecutionLogSchema.shape);
+
+// Plugin Manager Types
+export type PluginTemplate = typeof pluginTemplates.$inferSelect;
+export type InsertPluginTemplate = z.infer<typeof insertPluginTemplateSchema>;
+
+export type ChatbotPlugin = typeof chatbotPlugins.$inferSelect;
+export type InsertChatbotPlugin = z.infer<typeof insertChatbotPluginSchema>;
+
+export type PluginExecutionLog = typeof pluginExecutionLogs.$inferSelect;
+export type InsertPluginExecutionLog = z.infer<typeof insertPluginExecutionLogSchema>;
+
+export type TriggerRules = z.infer<typeof triggerRulesSchema>;
+
+// Extended types for API responses
+export type ChatbotPluginWithTemplate = ChatbotPlugin & {
+  pluginTemplate: PluginTemplate;
+  chatbot: Chatbot;
+};
+
+export type PluginExecutionLogWithDetails = PluginExecutionLog & {
+  chatbotPlugin: ChatbotPluginWithTemplate;
+  conversation: Conversation | null;
+};
+
+export type PluginTemplateWithUsage = PluginTemplate & {
+  usageCount: number;
+  activeInstances: number;
 };
 
 // Export the default custom instructions constant

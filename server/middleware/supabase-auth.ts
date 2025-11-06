@@ -134,7 +134,7 @@ export async function requireClientAuth(req: Request, res: Response, next: NextF
     // Check if user has client role
     const role = user.user_metadata?.role || user.app_metadata?.role;
     
-    if (role !== 'client') {
+    if (role !== 'client' && role !== 'admin') {
       return res.status(403).json({ message: "Client access required" });
     }
 

@@ -63,7 +63,7 @@ export const chatbotConfigSchema = z.object({
     ]).default("professional"),
     customInstructions: z.string()
       .min(1, "Custom instructions cannot be empty")
-      .max(2000, "Custom instructions too long")
+      .max(10000, "Custom instructions too long")
       .default(DEFAULT_CUSTOM_INSTRUCTIONS),
     mainLanguage: z.string()
       .min(2, "Language code must be at least 2 characters")

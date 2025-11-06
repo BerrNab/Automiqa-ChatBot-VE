@@ -19,6 +19,7 @@ import ValidationSummary from "./ValidationSummary";
 import BackgroundImageUpload from "./BackgroundImageUpload";
 import ChatbotPreview from "./ChatbotPreview";
 import KnowledgeBaseManager from "./KnowledgeBaseManager";
+import ChatbotPluginsTab from "./ChatbotPluginsTab";
 import type { InsertChatbot, Client, Chatbot, ChatbotConfig } from "../../shared/schema";
 
 const DEFAULT_CUSTOM_INSTRUCTIONS = `You are a helpful assistant chatbot. Your primary role is to assist users with their questions and provide helpful information based on the available knowledge base and tools.
@@ -347,6 +348,7 @@ export default function ChatbotForm({ chatbot, onSubmit, isSubmitting, validatio
                 <TabsTrigger value="branding">Branding</TabsTrigger>
                 <TabsTrigger value="behavior">Behavior</TabsTrigger>
                 <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
+                <TabsTrigger value="plugins">Plugins</TabsTrigger>
                 <TabsTrigger value="leadCapture">Lead Capture</TabsTrigger>
                 <TabsTrigger value="hours">Hours</TabsTrigger>
                 <TabsTrigger value="appointments">Appointments</TabsTrigger>
@@ -1069,6 +1071,24 @@ export default function ChatbotForm({ chatbot, onSubmit, isSubmitting, validatio
                     <h3 className="text-lg font-semibold mb-2">Save Chatbot First</h3>
                     <p className="text-sm text-muted-foreground">
                       You need to save the chatbot before you can upload documents to the knowledge base.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="plugins" className="space-y-4">
+            {chatbot?.id ? (
+              <ChatbotPluginsTab chatbotId={chatbot.id} chatbotName={chatbot.name} />
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Save Chatbot First</h3>
+                    <p className="text-sm text-muted-foreground">
+                      You need to save the chatbot before you can configure plugins.
                     </p>
                   </div>
                 </CardContent>

@@ -62,11 +62,8 @@ export class SimpleChatService {
             kbResults += `\n\n**KNOWLEDGE BASE RESULTS:**
 Found ${results.length} relevant items. 
 
-**RESPONSE GUIDELINES:**
-1. Provide a brief summary (2-3 sentences) mentioning the available information
-2. DO NOT list items in your message - they will be shown as clickable buttons
-3. Ask the user which specific item they want to learn more about
-4. Keep your response concise and conversational
+Ask the user which specific item they want to learn more about
+Keep your response concise and conversational
 
 **SUGGESTED PROMPTS FORMAT:**
 At the end of your response, you MUST add a special section with clickable options.
@@ -112,30 +109,13 @@ CRITICAL RULES:
         modelName: "gpt-4o",
         temperature: 0.7,
         openAIApiKey: process.env.OPENAI_API_KEY,
-        maxTokens: 2000, // Increased to prevent truncation
+        maxTokens: 3000, // Increased to prevent truncation
       });
 
       const response = await model.invoke(messages);
       let responseText = response.content.toString();
-      // Extract links from KB results
-      const links: Array<{title: string, url: string}> = [];
-      if (kbResults) {
-        const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-        const foundUrls = kbResults.match(urlRegex);
-        if (foundUrls) {
-          foundUrls.forEach((url, idx) => {
-            // Try to extract context around the URL for a better title
-            const urlIndex = kbResults.indexOf(url);
-            const contextBefore = kbResults.substring(Math.max(0, urlIndex - 50), urlIndex).trim();
-            const words = contextBefore.split(/\s+/).slice(-5).join(' ');
-            links.push({
-              title: words || `Link ${idx + 1}`,
-              url: url
-            });
-          });
-        }
-      }
-
+      console.log(responseText);
+      
       // Extract suggested prompts if present
       const promptMatch = responseText.match(/---SUGGESTED_PROMPTS---([\s\S]*?)---END_PROMPTS---/);
       if (promptMatch) {
@@ -147,34 +127,6 @@ CRITICAL RULES:
         
         // Remove the prompts section from the response
         responseText = responseText.replace(/---SUGGESTED_PROMPTS---[\s\S]*?---END_PROMPTS---/, '').trim();
-        
-        // Remove numbered list that duplicates the suggested prompts
-        // This removes lists like "1. **Item**" or "1. Item" that appear in the message
-        if (prompts.length > 0) {
-          // Remove each prompt from the response text if it appears as a numbered item
-          prompts.forEach((prompt, index) => {
-            const cleanPrompt = prompt.replace(/\*\*/g, '').trim();
-            // Match patterns like "1. **prompt**" or "1. prompt" or "١. prompt" (Arabic numerals)
-            const patterns = [
-              new RegExp(`\\n?\\s*${index + 1}\\.\\s*\\*\\*${cleanPrompt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\*\\*\\s*`, 'gi'),
-              new RegExp(`\\n?\\s*${index + 1}\\.\\s*${cleanPrompt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`, 'gi'),
-            ];
-            patterns.forEach(pattern => {
-              responseText = responseText.replace(pattern, '');
-            });
-          });
-          
-          // Clean up any remaining empty lines or extra whitespace
-          responseText = responseText.replace(/\n{3,}/g, '\n\n').trim();
-          
-          // Add prompts as a JSON object at the end (will be parsed by frontend)
-          responseText += `\n\n__RESPONSE_OPTIONS__${JSON.stringify(prompts)}`;
-        }
-      }
-
-      // Add links if found
-      if (links.length > 0) {
-        responseText += `\n\n__LINKS__${JSON.stringify(links)}`;
       }
 
       // Step 4: Update conversation history

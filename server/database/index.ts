@@ -148,3 +148,6 @@ export const kbDocumentService = new DatabaseService('kb_documents');
 export const kbChunkService = new DatabaseService('kb_chunks');
 export const emailSettingsService = new DatabaseService('email_settings');
 export const emailNotificationService = new DatabaseService('email_notifications');
+export const pluginTemplateService = new DatabaseService('plugin_templates');
+export const chatbotPluginService = new DatabaseService('chatbot_plugins');
+export const pluginExecutionLogService = new DatabaseService('plugin_execution_logs');

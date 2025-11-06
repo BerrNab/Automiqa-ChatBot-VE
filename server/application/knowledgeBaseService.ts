@@ -91,11 +91,12 @@ export class KnowledgeBaseService {
       }
 
       // Process chunks in batches to avoid overwhelming the database and API
-      const BATCH_SIZE = 10; // Process 10 chunks at a time
+      const BATCH_SIZE = 5; // Reduced from 10 to 5 to avoid rate limits
+      const DELAY_BETWEEN_BATCHES = 2000; // 2 second delay between batches
       const totalChunks = chunks.length;
       let processedChunks = 0;
       
-      console.log(`Processing ${totalChunks} chunks in batches of ${BATCH_SIZE}...`);
+      console.log(`Processing ${totalChunks} chunks in batches of ${BATCH_SIZE} with ${DELAY_BETWEEN_BATCHES}ms delay...`);
       
       // Update document with total chunks count
       await storage.updateKBDocumentProgress(documentId, 0, totalChunks);
@@ -104,41 +105,64 @@ export class KnowledgeBaseService {
         const batch = chunks.slice(i, i + BATCH_SIZE);
         const batchPromises = batch.map(async (chunkText, batchIndex) => {
           const index = i + batchIndex;
-          try {
-            // Create embedding using OpenAI
-            const embedding = await openaiService.createEmbedding(chunkText);
-            
-            // Store chunk with embedding
-            await storage.createKBChunk({
-              id: nanoid(),
-              documentId,
-              chatbotId: document.chatbotId,
-              chunkIndex: index,
-              text: chunkText,
-              tokenCount: kbService.countTokens(chunkText),
-              embedding: embedding, // This will be stored as vector in PostgreSQL
-              metadata: {
-                filename,
-                contentType,
-                extractedAt: new Date().toISOString()
+          let retries = 3;
+          
+          while (retries > 0) {
+            try {
+              // Create embedding using OpenAI
+              const embedding = await openaiService.createEmbedding(chunkText);
+              
+              // Store chunk with embedding
+              await storage.createKBChunk({
+                id: nanoid(),
+                documentId,
+                chatbotId: document.chatbotId,
+                chunkIndex: index,
+                text: chunkText,
+                tokenCount: kbService.countTokens(chunkText),
+                embedding: embedding, // This will be stored as vector in PostgreSQL
+                metadata: {
+                  filename,
+                  contentType,
+                  extractedAt: new Date().toISOString()
+                }
+              });
+              
+              processedChunks++;
+              
+              // Update progress every batch
+              if (processedChunks % BATCH_SIZE === 0 || processedChunks === totalChunks) {
+                await storage.updateKBDocumentProgress(documentId, processedChunks, totalChunks);
+                console.log(`Progress: ${processedChunks}/${totalChunks} chunks processed (${Math.round(processedChunks/totalChunks*100)}%)`);
               }
-            });
-            
-            processedChunks++;
-            
-            // Update progress every 10 chunks (after each batch)
-            if (processedChunks % BATCH_SIZE === 0 || processedChunks === totalChunks) {
-              await storage.updateKBDocumentProgress(documentId, processedChunks, totalChunks);
-              console.log(`Progress: ${processedChunks}/${totalChunks} chunks processed (${Math.round(processedChunks/totalChunks*100)}%)`);
+              
+              break; // Success, exit retry loop
+            } catch (error: any) {
+              retries--;
+              
+              // Check for rate limit or network errors
+              const isRateLimitError = error.status === 429 || error.status === 403;
+              const isFetchError = error.message?.includes('fetch failed');
+
+              if ((isRateLimitError || isFetchError) && retries > 0) {
+                const waitTime = (4 - retries) * 5000; // Exponential backoff: 5s, 10s, 15s
+                console.log(`Network/Rate limit error for chunk ${index}, retrying in ${waitTime/1000}s... (${retries} retries left)`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+              } else {
+                console.error(`Failed to process chunk ${index} for document ${documentId}:`, error);
+                throw error;
+              }
             }
-          } catch (error) {
-            console.error(`Failed to process chunk ${index} for document ${documentId}:`, error);
-            throw error;
           }
         });
         
         // Wait for current batch to complete before starting next batch
         await Promise.all(batchPromises);
+        
+        // Add delay between batches to avoid rate limits
+        if (i + BATCH_SIZE < chunks.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+        }
       }
       
       console.log(`All ${totalChunks} chunks processed successfully`);

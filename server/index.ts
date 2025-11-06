@@ -12,6 +12,7 @@ import { paymentRoutes } from "./routes/payments.js";
 import { clientDashboardRoutes } from "./routes/client-dashboard.js";
 import { knowledgeBaseRoutes } from "./routes/knowledge-base.js";
 import { emailNotificationRoutes } from "./routes/email-notifications.js";
+import { pluginManagerRoutes } from "./routes/plugin-manager.js";
 
 // Simple logger
 const log = (message: string) => {
@@ -102,6 +103,7 @@ export async function setupApp() {
   app.use("/api", clientDashboardRoutes);
   app.use("/api", knowledgeBaseRoutes);
   app.use("/api/email-notifications", emailNotificationRoutes);
+  app.use("/api", pluginManagerRoutes);
 
   // Error handling middleware
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

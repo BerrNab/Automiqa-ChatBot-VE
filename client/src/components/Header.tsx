@@ -23,7 +23,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
         title: "Logged out",
         description: "You have been successfully logged out",
       });
-      window.location.href = "/admin-login";
+      window.location.href = "/admin/login";
     },
     onError: (error: any) => {
       // Clear token even on error

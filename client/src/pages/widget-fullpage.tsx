@@ -343,10 +343,23 @@ export default function WidgetFullpage() {
     }
   };
 
-  // Check for existing user details in sessionStorage
+  // Check for existing user details in sessionStorage OR skip if lead capture disabled
   useEffect(() => {
-    if (!chatbotId) return;
+    if (!chatbotId || !config) return;
     
+    console.log('Lead capture config:', config.leadCapture);
+    console.log('Lead capture enabled:', config.leadCapture?.enabled);
+    
+    // If lead capture is disabled, skip the form entirely
+    if (!config.leadCapture?.enabled) {
+      console.log('Lead capture is disabled, skipping form');
+      setUserDetailsProvided(true);
+      return;
+    }
+    
+    console.log('Lead capture is enabled, showing form');
+    
+    // Otherwise check for stored details
     const storageKey = `chatbot_user_${chatbotId}`;
     const storedDetails = sessionStorage.getItem(storageKey);
     
@@ -369,7 +382,7 @@ export default function WidgetFullpage() {
         sessionStorage.removeItem(storageKey);
       }
     }
-  }, [chatbotId]);
+  }, [chatbotId, config]);
 
   // Initialize welcome message
   useEffect(() => {
@@ -861,41 +874,6 @@ export default function WidgetFullpage() {
             </div>
           )}
           
-          {/* Suggested Prompts */}
-          {messages.length === 1 && config?.behavior?.suggestedPrompts && config.behavior.suggestedPrompts.length > 0 && (
-            <div className="text-center mt-6 animate-fadeIn">
-              <p className={cn(
-                "text-sm mb-4",
-                theme === 'gradient' ? "text-white/70" : "text-gray-500"
-              )}>
-                {t.quickQuestions}
-              </p>
-              <div className="flex flex-wrap justify-center gap-3 stagger-enter">
-                {config.behavior.suggestedPrompts.map((prompt, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSuggestedPrompt(prompt)}
-                    className={cn(
-                      "widget-button transition-all duration-300"
-                    )}
-                    style={{
-                      ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
-                      animationDelay: `${index * 0.1}s`,
-                      borderColor: theme === 'gradient' ? 'white' : primaryColor,
-                      color: theme === 'gradient' ? 'white' : primaryColor,
-                      borderWidth: theme === 'minimal' ? '2px' : '1px',
-                      borderRadius: theme === 'minimal' ? '0' : undefined,
-                    }}
-                    data-testid={`button-suggested-prompt-${index}`}
-                  >
-                    {prompt}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </ScrollArea>
 
@@ -909,6 +887,32 @@ export default function WidgetFullpage() {
         style={theme === 'glass' ? getGlassStyle(0.5) : undefined}
       >
         <div className="max-w-4xl mx-auto">
+          {/* Suggested Prompts as Quick Replies */}
+          {messages.length === 1 && config?.behavior?.suggestedPrompts && config.behavior.suggestedPrompts.length > 0 && (
+            <div className="mb-4">
+              <div className="flex flex-wrap gap-2">
+                {config.behavior.suggestedPrompts.map((prompt, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSuggestedPrompt(prompt)}
+                    className="widget-button transition-all duration-300"
+                    style={{
+                      borderColor: theme === 'gradient' ? 'white' : primaryColor,
+                      color: theme === 'gradient' ? 'white' : primaryColor,
+                      borderWidth: theme === 'minimal' ? '2px' : '1px',
+                      borderRadius: theme === 'minimal' ? '4px' : '20px',
+                    }}
+                    data-testid={`button-suggested-prompt-${index}`}
+                  >
+                    {prompt}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="flex gap-4">
             <Input
               value={inputMessage}

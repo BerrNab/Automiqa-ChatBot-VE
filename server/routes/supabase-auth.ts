@@ -144,7 +144,49 @@ router.post("/client/login", async (req, res) => {
 });
 
 /**
- * Logout - invalidate Supabase session
+ * Admin logout - invalidate Supabase session
+ */
+router.post("/admin/logout", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      
+      // Sign out from Supabase
+      await supabase.auth.admin.signOut(token);
+    }
+
+    res.json({ message: "Logged out successfully" });
+  } catch (error: any) {
+    console.error('Admin logout error:', error);
+    res.json({ message: "Logged out successfully" }); // Always succeed
+  }
+});
+
+/**
+ * Client logout - invalidate Supabase session
+ */
+router.post("/client/logout", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      
+      // Sign out from Supabase
+      await supabase.auth.admin.signOut(token);
+    }
+
+    res.json({ message: "Logged out successfully" });
+  } catch (error: any) {
+    console.error('Client logout error:', error);
+    res.json({ message: "Logged out successfully" }); // Always succeed
+  }
+});
+
+/**
+ * Generic logout - invalidate Supabase session
  */
 router.post("/logout", async (req, res) => {
   try {

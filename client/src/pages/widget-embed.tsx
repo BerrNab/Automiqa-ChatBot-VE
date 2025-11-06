@@ -455,10 +455,23 @@ export default function WidgetEmbed() {
     }
   };
 
-  // Check for existing user details in sessionStorage
+  // Check for existing user details in sessionStorage OR skip if lead capture disabled
   useEffect(() => {
-    if (!chatbotId) return;
+    if (!chatbotId || !config) return;
     
+    console.log('[Embed] Lead capture config:', config.leadCapture);
+    console.log('[Embed] Lead capture enabled:', config.leadCapture?.enabled);
+    
+    // If lead capture is disabled, skip the pre-chat form entirely
+    if (!config.leadCapture?.enabled) {
+      console.log('[Embed] Lead capture is disabled, skipping pre-chat form');
+      setUserDetailsProvided(true);
+      return;
+    }
+    
+    console.log('[Embed] Lead capture is enabled, checking for stored details');
+    
+    // Otherwise check for stored details
     const storageKey = `chatbot_user_${chatbotId}`;
     const storedDetails = sessionStorage.getItem(storageKey);
     
@@ -481,7 +494,7 @@ export default function WidgetEmbed() {
         sessionStorage.removeItem(storageKey);
       }
     }
-  }, [chatbotId]);
+  }, [chatbotId, config]);
 
   // Initialize welcome message and auto-open
   useEffect(() => {
@@ -495,7 +508,6 @@ export default function WidgetEmbed() {
         role: "assistant",
         content: welcomeMsg,
         timestamp: new Date(),
-        responseOptions: config.behavior?.suggestedPrompts,
       },
     ]);
 

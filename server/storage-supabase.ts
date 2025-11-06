@@ -365,6 +365,11 @@ export class SupabaseStorage implements IStorage {
       data.config = this.parseConfig(data.config);
     }
     
+    // Map snake_case to camelCase for compatibility
+    if (data.client_id) {
+      (data as any).clientId = data.client_id;
+    }
+    
     return data as Chatbot;
   }
 
