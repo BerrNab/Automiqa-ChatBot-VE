@@ -6,6 +6,7 @@ import { mcpService } from "../services/mcp.js";
 import { langchainAgentService } from "../services/langchain-agent.js";
 import { chatbotConfigSchema } from "../shared/schema.js";
 import type { InsertLead } from "../shared/schema.js";
+import { simpleChatService } from "../services/simple-chat.js";
 
 interface ChatResponse {
   message: string;
@@ -271,7 +272,6 @@ export class WidgetApplicationService {
         
         // Use simple chat service (bypasses LangChain complexity)
         console.log(`[Widget] Processing message with Simple Chat for chatbot ${chatbotId}`);
-        const { simpleChatService } = await import('../services/simple-chat');
         responseText = await simpleChatService.processMessage(message, validatedConfig, agentContext);
         
       } catch (configError: any) {

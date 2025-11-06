@@ -65,20 +65,7 @@ Found ${results.length} relevant items.
 Ask the user which specific item they want to learn more about
 Keep your response concise and conversational
 
-**SUGGESTED PROMPTS FORMAT:**
-At the end of your response, you MUST add a special section with clickable options.
-Format it EXACTLY like this (use the actual item names from the results):
-
----SUGGESTED_PROMPTS---
-[Short item 1 name (max 6 words)]
-[Short item 2 name (max 6 words)]
-[Short item 3 name (max 6 words)]
-[If more items available, add "More..." in user's lang, as the last option]
----END_PROMPTS---
-
 CRITICAL RULES:
-- Include MAXIMUM 3 suggested prompts
-- Each prompt should be SHORT (6 words max)
 - Use actual names from the search results
 - These will be shown as clickable buttons
 - DO NOT include a numbered list in your message text`;
@@ -109,12 +96,11 @@ CRITICAL RULES:
         modelName: "gpt-4o",
         temperature: 0.7,
         openAIApiKey: process.env.OPENAI_API_KEY,
-        maxTokens: 3000, // Increased to prevent truncation
+        maxTokens: 5000, // Increased to prevent truncation
       });
 
       const response = await model.invoke(messages);
       let responseText = response.content.toString();
-      console.log(responseText);
       
       // Extract suggested prompts if present
       const promptMatch = responseText.match(/---SUGGESTED_PROMPTS---([\s\S]*?)---END_PROMPTS---/);

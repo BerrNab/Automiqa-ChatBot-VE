@@ -397,7 +397,7 @@ export const mcpService = {
       
       if (!validatedConfig.mcpTools?.enabled) {
         // Fallback to regular OpenAI processing
-        const { openaiService } = await import('./openai');
+        const { openaiService } = await import('./openai.js');
         return await openaiService.processMessage(message, validatedConfig);
       }
 
@@ -413,7 +413,7 @@ export const mcpService = {
         response = await this.handleSheetsRequest(message, validatedConfig, context);
       } else {
         // Fallback to regular OpenAI processing
-        const { openaiService } = await import('./openai');
+        const { openaiService } = await import('./openai.js');
         response = await openaiService.processMessage(message, validatedConfig);
       }
       
@@ -461,7 +461,7 @@ export const mcpService = {
         // Persist lead data to database
         if (context?.clientId && context?.chatbotId && clientInfo.name && clientInfo.email) {
           try {
-            const { storage } = await import('../storage-supabase');
+            const { storage } = await import('../storage-supabase.js');
             await storage.createLead({
               clientId: context.clientId,
               chatbotId: context.chatbotId,
@@ -499,7 +499,7 @@ export const mcpService = {
         // Persist appointment data to database
         if (context?.clientId && context?.chatbotId && result.data) {
           try {
-            const { storage } = await import('../storage-supabase');
+            const { storage } = await import('../storage-supabase.js');
             const startTime = new Date(appointmentDetails.dateTime);
             const endTime = new Date(startTime.getTime() + appointmentDetails.duration * 60000); // Add duration in milliseconds
             
