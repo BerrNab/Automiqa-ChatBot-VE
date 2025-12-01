@@ -12,9 +12,13 @@ import {
   AlertCircle, 
   CheckCircle, 
   Clock, 
-  Download 
+  Download,
+  FileSpreadsheet,
+  FileJson,
+  File
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import EmbeddingSettings from "./EmbeddingSettings";
 
 interface KnowledgeBaseDocument {
   id: string;
@@ -27,14 +31,85 @@ interface KnowledgeBaseDocument {
   updatedAt: string;
 }
 
-interface KnowledgeBaseManagerProps {
-  chatbotId: string;
+interface ChunkingStrategy {
+  json?: {
+    preserveStructure: boolean;
+    maxDepth: number;
+    chunkSize: number;
+    includeKeys: boolean;
+  };
+  csv?: {
+    rowsPerChunk: number;
+    includeHeaders: boolean;
+    columnSeparator: string;
+  };
+  excel?: {
+    rowsPerChunk: number;
+    includeHeaders: boolean;
+    includeSheetName: boolean;
+    sheetsToProcess?: string[];
+  };
+  pdf?: {
+    chunkSize: number;
+    overlap: number;
+    preserveParagraphs: boolean;
+  };
+  text?: {
+    chunkSize: number;
+    overlap: number;
+    respectSentences: boolean;
+  };
 }
 
-export default function KnowledgeBaseManager({ chatbotId }: KnowledgeBaseManagerProps) {
+interface KnowledgeBaseConfig {
+  embeddingModel: string;
+  embeddingDimensions: number;
+  chunkingStrategy: ChunkingStrategy;
+}
+
+interface KnowledgeBaseManagerProps {
+  chatbotId: string;
+  form?: any; // React Hook Form instance
+}
+
+const DEFAULT_CONFIG: KnowledgeBaseConfig = {
+  embeddingModel: "text-embedding-3-large",
+  embeddingDimensions: 1536,
+  chunkingStrategy: {
+    json: { preserveStructure: true, maxDepth: 3, chunkSize: 500, includeKeys: true },
+    csv: { rowsPerChunk: 10, includeHeaders: true, columnSeparator: ", " },
+    excel: { rowsPerChunk: 10, includeHeaders: true, includeSheetName: true },
+    pdf: { chunkSize: 1000, overlap: 200, preserveParagraphs: true },
+    text: { chunkSize: 1000, overlap: 200, respectSentences: true },
+  },
+};
+
+export default function KnowledgeBaseManager({ 
+  chatbotId, 
+  form 
+}: KnowledgeBaseManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  
+  // Watch form values for reactive updates
+  const embeddingModel = form?.watch("config.knowledgeBase.embeddingModel") || "text-embedding-3-large";
+  const embeddingDimensions = form?.watch("config.knowledgeBase.embeddingDimensions") || 1536;
+  const chunkingStrategy = form?.watch("config.knowledgeBase.chunkingStrategy") || DEFAULT_CONFIG.chunkingStrategy;
+  
+  const handleConfigChange = (newConfig: Partial<KnowledgeBaseConfig>) => {
+    if (form) {
+      if (newConfig.embeddingModel !== undefined) {
+        form.setValue("config.knowledgeBase.embeddingModel", newConfig.embeddingModel, { shouldDirty: true });
+      }
+      if (newConfig.embeddingDimensions !== undefined) {
+        form.setValue("config.knowledgeBase.embeddingDimensions", newConfig.embeddingDimensions, { shouldDirty: true });
+      }
+      if (newConfig.chunkingStrategy !== undefined) {
+        form.setValue("config.knowledgeBase.chunkingStrategy", newConfig.chunkingStrategy, { shouldDirty: true });
+      }
+    }
+  };
 
   // Fetch knowledge base documents
   const { data: documents, isLoading } = useQuery<KnowledgeBaseDocument[]>({
@@ -110,19 +185,29 @@ export default function KnowledgeBaseManager({ chatbotId }: KnowledgeBaseManager
     if (!files) return;
 
     Array.from(files).forEach((file) => {
-      // Validate file type
+      // Validate file type - now includes CSV and Excel
       const allowedTypes = [
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'text/plain',
-        'application/json'
+        'application/json',
+        // CSV types
+        'text/csv',
+        'application/csv',
+        // Excel types
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
       ];
 
-      if (!allowedTypes.includes(file.type)) {
+      // Also check by extension for better compatibility
+      const ext = file.name.toLowerCase().split('.').pop();
+      const allowedExtensions = ['pdf', 'doc', 'docx', 'txt', 'json', 'csv', 'xlsx', 'xls'];
+
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext || '')) {
         toast({
           title: "Unsupported file type",
-          description: `${file.name} is not a supported file type. Please upload PDF, DOC, DOCX, TXT, or JSON files.`,
+          description: `${file.name} is not a supported file type. Please upload PDF, Word, Text, JSON, CSV, or Excel files.`,
           variant: "destructive",
         });
         return;
@@ -143,6 +228,27 @@ export default function KnowledgeBaseManager({ chatbotId }: KnowledgeBaseManager
 
     // Clear the input
     event.target.value = '';
+  };
+
+  const getFileIcon = (contentType: string, filename: string) => {
+    const ext = filename.toLowerCase().split('.').pop();
+    
+    if (contentType.includes('json') || ext === 'json') {
+      return <FileJson className="h-4 w-4 text-orange-500" />;
+    }
+    if (contentType.includes('csv') || ext === 'csv') {
+      return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
+    }
+    if (contentType.includes('spreadsheet') || contentType.includes('excel') || ext === 'xlsx' || ext === 'xls') {
+      return <FileSpreadsheet className="h-4 w-4 text-green-600" />;
+    }
+    if (contentType.includes('pdf') || ext === 'pdf') {
+      return <FileText className="h-4 w-4 text-red-500" />;
+    }
+    if (contentType.includes('word') || ext === 'doc' || ext === 'docx') {
+      return <FileText className="h-4 w-4 text-blue-500" />;
+    }
+    return <File className="h-4 w-4 text-gray-500" />;
   };
 
   const getStatusIcon = (status: string) => {
@@ -199,6 +305,18 @@ export default function KnowledgeBaseManager({ chatbotId }: KnowledgeBaseManager
 
   return (
     <div className="space-y-6">
+      {/* Embedding Settings */}
+      {form && (
+        <EmbeddingSettings
+          embeddingModel={embeddingModel}
+          embeddingDimensions={embeddingDimensions}
+          chunkingStrategy={chunkingStrategy}
+          onEmbeddingModelChange={(model) => handleConfigChange({ embeddingModel: model })}
+          onEmbeddingDimensionsChange={(dims) => handleConfigChange({ embeddingDimensions: dims })}
+          onChunkingStrategyChange={(strategy) => handleConfigChange({ chunkingStrategy: strategy })}
+        />
+      )}
+
       {/* Upload Section */}
       <Card>
         <CardHeader>
@@ -207,7 +325,7 @@ export default function KnowledgeBaseManager({ chatbotId }: KnowledgeBaseManager
             Upload Documents
           </CardTitle>
           <CardDescription>
-            Upload documents to enhance your chatbot's knowledge base. Supported formats: PDF, DOC, DOCX, TXT, JSON (Max 10MB per file)
+            Upload documents to enhance your chatbot's knowledge base. Supported formats: PDF, Word, Text, JSON, CSV, Excel (Max 10MB per file)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -220,7 +338,7 @@ export default function KnowledgeBaseManager({ chatbotId }: KnowledgeBaseManager
               id="kb-file-input"
               type="file"
               multiple
-              accept=".pdf,.doc,.docx,.txt,.json"
+              accept=".pdf,.doc,.docx,.txt,.json,.csv,.xlsx,.xls"
               className="hidden"
               onChange={handleFileUpload}
               data-testid="input-kb-upload"
@@ -277,7 +395,10 @@ export default function KnowledgeBaseManager({ chatbotId }: KnowledgeBaseManager
                   data-testid={`document-${doc.id}`}
                 >
                   <div className="flex items-start gap-3 flex-1">
-                    {getStatusIcon(doc.status)}
+                    <div className="flex flex-col items-center gap-1">
+                      {getFileIcon(doc.contentType, doc.filename)}
+                      {getStatusIcon(doc.status)}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium text-sm truncate">{doc.filename}</h4>

@@ -198,9 +198,74 @@ export const chatbotConfigSchema = z.object({
     })).max(100, "Too many FAQs").optional(),
     autoLearn: z.boolean().default(false), // Enable automatic learning from conversations
     updateFrequency: z.enum(["manual", "daily", "weekly"]).default("manual"),
+    
+    // Embedding model configuration - allows selection based on language/use case
+    embeddingModel: z.enum([
+      "text-embedding-3-large",      // OpenAI - best quality, multilingual (default)
+      "text-embedding-3-small",      // OpenAI - faster, cheaper, good for English
+      "text-embedding-ada-002",      // OpenAI - legacy, still reliable
+    ]).default("text-embedding-3-large"),
+    
+    // Embedding dimensions (affects storage and search quality)
+    embeddingDimensions: z.number().min(256).max(3072).default(1536),
+    
+    // File-type specific chunking strategies for optimal embedding
+    chunkingStrategy: z.object({
+      // JSON files - preserve structure for better context
+      json: z.object({
+        preserveStructure: z.boolean().default(true), // Keep JSON hierarchy in chunks
+        maxDepth: z.number().min(1).max(10).default(3), // How deep to traverse
+        chunkSize: z.number().min(100).max(4000).default(500),
+        includeKeys: z.boolean().default(true), // Include key names in chunk text
+      }).default({ preserveStructure: true, maxDepth: 3, chunkSize: 500, includeKeys: true }),
+      
+      // CSV files - group rows together with headers
+      csv: z.object({
+        rowsPerChunk: z.number().min(1).max(100).default(10),
+        includeHeaders: z.boolean().default(true), // Repeat headers in each chunk
+        columnSeparator: z.string().default(", "), // How to format columns in text
+      }).default({ rowsPerChunk: 10, includeHeaders: true, columnSeparator: ", " }),
+      
+      // Excel files - similar to CSV but with sheet awareness
+      excel: z.object({
+        rowsPerChunk: z.number().min(1).max(100).default(10),
+        includeHeaders: z.boolean().default(true),
+        includeSheetName: z.boolean().default(true), // Add sheet name to context
+        sheetsToProcess: z.array(z.string()).optional(), // null = all sheets
+      }).default({ rowsPerChunk: 10, includeHeaders: true, includeSheetName: true }),
+      
+      // PDF files - standard text chunking with overlap
+      pdf: z.object({
+        chunkSize: z.number().min(200).max(4000).default(1000),
+        overlap: z.number().min(0).max(500).default(200),
+        preserveParagraphs: z.boolean().default(true),
+      }).default({ chunkSize: 1000, overlap: 200, preserveParagraphs: true }),
+      
+      // Plain text and Word documents
+      text: z.object({
+        chunkSize: z.number().min(200).max(4000).default(1000),
+        overlap: z.number().min(0).max(500).default(200),
+        respectSentences: z.boolean().default(true), // Don't break mid-sentence
+      }).default({ chunkSize: 1000, overlap: 200, respectSentences: true }),
+    }).default({
+      json: { preserveStructure: true, maxDepth: 3, chunkSize: 500, includeKeys: true },
+      csv: { rowsPerChunk: 10, includeHeaders: true, columnSeparator: ", " },
+      excel: { rowsPerChunk: 10, includeHeaders: true, includeSheetName: true },
+      pdf: { chunkSize: 1000, overlap: 200, preserveParagraphs: true },
+      text: { chunkSize: 1000, overlap: 200, respectSentences: true },
+    }),
   }).default({
     autoLearn: false,
     updateFrequency: "manual",
+    embeddingModel: "text-embedding-3-large",
+    embeddingDimensions: 1536,
+    chunkingStrategy: {
+      json: { preserveStructure: true, maxDepth: 3, chunkSize: 500, includeKeys: true },
+      csv: { rowsPerChunk: 10, includeHeaders: true, columnSeparator: ", " },
+      excel: { rowsPerChunk: 10, includeHeaders: true, includeSheetName: true },
+      pdf: { chunkSize: 1000, overlap: 200, preserveParagraphs: true },
+      text: { chunkSize: 1000, overlap: 200, respectSentences: true },
+    },
   }),
   
   // MCP Tools integration configuration
@@ -354,6 +419,15 @@ export const chatbotConfigSchema = z.object({
   knowledgeBase: {
     autoLearn: false,
     updateFrequency: "manual",
+    embeddingModel: "text-embedding-3-large",
+    embeddingDimensions: 1536,
+    chunkingStrategy: {
+      json: { preserveStructure: true, maxDepth: 3, chunkSize: 500, includeKeys: true },
+      csv: { rowsPerChunk: 10, includeHeaders: true, columnSeparator: ", " },
+      excel: { rowsPerChunk: 10, includeHeaders: true, includeSheetName: true },
+      pdf: { chunkSize: 1000, overlap: 200, preserveParagraphs: true },
+      text: { chunkSize: 1000, overlap: 200, respectSentences: true },
+    },
   },
   mcpTools: {
     enabled: false,

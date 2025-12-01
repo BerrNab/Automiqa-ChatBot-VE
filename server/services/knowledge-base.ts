@@ -1,7 +1,16 @@
 import * as crypto from 'crypto';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { encodingForModel } from 'js-tiktoken';
+import { documentProcessor, type ChunkingStrategy, type ProcessingResult } from './document-processor.js';
 
+/**
+ * Knowledge Base Service
+ * 
+ * This is a wrapper around the DocumentProcessor that maintains backward compatibility
+ * while providing enhanced file-type-specific processing.
+ * 
+ * For new code, prefer using documentProcessor directly.
+ */
 export class KnowledgeBaseService {
   private tokenEncoder: any;
 
@@ -14,7 +23,23 @@ export class KnowledgeBaseService {
     }
   }
 
-  // Extract text from various file types
+  /**
+   * Process document with file-type-specific chunking
+   * This is the NEW recommended method that returns structured chunks with metadata
+   */
+  async processDocument(
+    buffer: Buffer,
+    contentType: string,
+    filename: string,
+    chunkingStrategy?: ChunkingStrategy
+  ): Promise<ProcessingResult> {
+    return documentProcessor.processDocument(buffer, contentType, filename, chunkingStrategy);
+  }
+
+  /**
+   * @deprecated Use processDocument() instead for better file-type handling
+   * Extract text from various file types (legacy method for backward compatibility)
+   */
   async extractText(buffer: Buffer, contentType: string, filename: string): Promise<string> {
     try {
       switch (contentType) {
@@ -35,6 +60,18 @@ export class KnowledgeBaseService {
           const mammoth = (await import('mammoth')).default;
           const docxResult = await mammoth.extractRawText({ buffer });
           return docxResult.value;
+
+        case 'text/csv':
+        case 'application/csv':
+          // For CSV, use the new processor and join chunks
+          const csvResult = await this.processDocument(buffer, contentType, filename);
+          return csvResult.chunks.map(c => c.text).join('\n\n');
+
+        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        case 'application/vnd.ms-excel':
+          // For Excel, use the new processor and join chunks
+          const excelResult = await this.processDocument(buffer, contentType, filename);
+          return excelResult.chunks.map(c => c.text).join('\n\n');
           
         default:
           throw new Error(`Unsupported file type: ${contentType}`);
@@ -75,13 +112,16 @@ export class KnowledgeBaseService {
     return lines.join('\n');
   }
   
-  // Chunk text with overlap using LangChain splitter
+  /**
+   * @deprecated Use processDocument() instead for file-type-specific chunking
+   * Chunk text with overlap using LangChain splitter (legacy method)
+   */
   async chunkText(text: string, chunkSize = 1000, overlap = 200): Promise<string[]> {
     try {
       const splitter = new RecursiveCharacterTextSplitter({
         chunkSize,
         chunkOverlap: overlap,
-        separators: ['\n\n', '\n', '.', '!', '?', ',', ' ', ''],
+        separators: ['\n\n', '\n', '. ', '! ', '? ', ', ', ' ', ''],
         lengthFunction: (text) => this.countTokens(text),
       });
       
@@ -147,7 +187,7 @@ export class KnowledgeBaseService {
     return Math.ceil(text.length / 4);
   }
   
-  // Validate file before processing
+  // Validate file before processing - NOW SUPPORTS CSV AND EXCEL
   validateFile(buffer: Buffer, contentType: string, maxSizeMB = 10): void {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     
@@ -160,12 +200,25 @@ export class KnowledgeBaseService {
       'application/json',
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
+      'application/msword',
+      // NEW: CSV support
+      'text/csv',
+      'application/csv',
+      // NEW: Excel support
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
     ];
     
     if (!supportedTypes.includes(contentType)) {
-      throw new Error(`Unsupported file type: ${contentType}`);
+      throw new Error(`Unsupported file type: ${contentType}. Supported: PDF, Word, Text, JSON, CSV, Excel`);
     }
+  }
+
+  /**
+   * Get list of supported file types
+   */
+  getSupportedTypes(): string[] {
+    return documentProcessor.getSupportedTypes();
   }
   
   // Clean up the encoder when done
@@ -173,8 +226,12 @@ export class KnowledgeBaseService {
     if (this.tokenEncoder && typeof this.tokenEncoder.free === 'function') {
       this.tokenEncoder.free();
     }
+    documentProcessor.cleanup();
   }
 }
 
 // Export singleton instance
 export const kbService = new KnowledgeBaseService();
+
+// Re-export types for convenience
+export type { ChunkingStrategy, ProcessingResult } from './document-processor.js';

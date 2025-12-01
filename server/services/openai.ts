@@ -423,30 +423,30 @@ export const openaiService = {
     const lowerResponse = response.toLowerCase();
     const trimmedResponse = response.trim();
     
-    // Check for yes/no questions
-    if (this.isYesNoQuestion(lowerResponse)) {
-      return ["Yes", "No", "Tell me more"];
-    }
+    // // Check for yes/no questions
+    // if (this.isYesNoQuestion(lowerResponse)) {
+    //   return ["Yes", "No", "Tell me more"];
+    // }
     
-    // Check for appointment/scheduling questions
-    if (this.isAppointmentQuestion(lowerResponse)) {
-      return ["Schedule now", "View available times", "Maybe later"];
-    }
+    // // Check for appointment/scheduling questions
+    // if (this.isAppointmentQuestion(lowerResponse)) {
+    //   return ["Schedule now", "View available times", "Maybe later"];
+    // }
     
-    // Check for service inquiries
-    if (this.isServiceInquiry(lowerResponse)) {
-      return ["Get quote", "Learn more", "Contact sales"];
-    }
+    // // Check for service inquiries
+    // if (this.isServiceInquiry(lowerResponse)) {
+    //   return ["Get quote", "Learn more", "Contact sales"];
+    // }
     
-    // Check for satisfaction questions
-    if (this.isSatisfactionQuestion(lowerResponse)) {
-      return ["Very satisfied", "Satisfied", "Needs improvement"];
-    }
+    // // Check for satisfaction questions
+    // if (this.isSatisfactionQuestion(lowerResponse)) {
+    //   return ["Very satisfied", "Satisfied", "Needs improvement"];
+    // }
     
-    // Check for time preference questions
-    if (this.isTimePreferenceQuestion(lowerResponse)) {
-      return ["Morning", "Afternoon", "Evening", "Flexible"];
-    }
+    // // Check for time preference questions
+    // if (this.isTimePreferenceQuestion(lowerResponse)) {
+    //   return ["Morning", "Afternoon", "Evening", "Flexible"];
+    // }
     
     // Extract numbered options if present
     const numberedOptions = this.extractNumberedOptions(trimmedResponse);
@@ -460,25 +460,20 @@ export const openaiService = {
       return multipleChoiceOptions;
     }
     
-    // Check for contact preference questions
-    if (this.isContactQuestion(lowerResponse)) {
-      return ["Call me", "Email me", "Text me", "I'll contact you"];
-    }
+    // // Check for contact preference questions
+    // if (this.isContactQuestion(lowerResponse)) {
+    //   return ["Call me", "Email me", "Text me", "I'll contact you"];
+    // }
     
-    // Check for help questions
-    if (this.isHelpQuestion(lowerResponse)) {
-      return ["Yes, please help", "No thanks", "I have another question"];
-    }
+    // // Check for help questions
+    // if (this.isHelpQuestion(lowerResponse)) {
+    //   return ["Yes, please help", "No thanks", "I have another question"];
+    // }
     
-    // Check for confirmation questions
-    if (this.isConfirmationQuestion(lowerResponse)) {
-      return ["Confirm", "Cancel", "Make changes"];
-    }
-    
-    // If it's any other question (ends with ?), provide generic options
-    if (trimmedResponse.endsWith('?') && !lowerResponse.includes('how') && !lowerResponse.includes('what') && !lowerResponse.includes('why') && !lowerResponse.includes('when') && !lowerResponse.includes('where') && !lowerResponse.includes('who')) {
-      return ["Yes", "No", "I need more information"];
-    }
+    // // Check for confirmation questions
+    // if (this.isConfirmationQuestion(lowerResponse)) {
+    //   return ["Confirm", "Cancel", "Make changes"];
+    // }
     
     return undefined;
   },

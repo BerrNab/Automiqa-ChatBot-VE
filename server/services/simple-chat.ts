@@ -41,9 +41,9 @@ export class SimpleChatService {
       }
       const history = this.conversations.get(conversationKey)!;
 
-      // Step 1: Search knowledge base if enabled
+      // Step 1: Search knowledge base if available
       let kbResults = '';
-      if (config.knowledgeBase?.enabled || config.mcpTools?.enabled) {
+      if (config.knowledgeBase) {
         console.log('[SimpleChat] Searching knowledge base...');
         
         try {

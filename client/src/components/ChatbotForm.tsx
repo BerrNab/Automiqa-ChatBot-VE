@@ -178,6 +178,15 @@ export default function ChatbotForm({ chatbot, onSubmit, isSubmitting, validatio
         knowledgeBase: {
           autoLearn: false,
           updateFrequency: "manual" as const,
+          embeddingModel: "text-embedding-3-large" as const,
+          embeddingDimensions: 1536,
+          chunkingStrategy: {
+            json: { preserveStructure: true, maxDepth: 3, chunkSize: 500, includeKeys: true },
+            csv: { rowsPerChunk: 10, includeHeaders: true, columnSeparator: ", " },
+            excel: { rowsPerChunk: 10, includeHeaders: true, includeSheetName: true },
+            pdf: { chunkSize: 1000, overlap: 200, preserveParagraphs: true },
+            text: { chunkSize: 1000, overlap: 200, respectSentences: true },
+          },
         },
         mcpTools: {
           enabled: false,
@@ -1062,7 +1071,10 @@ export default function ChatbotForm({ chatbot, onSubmit, isSubmitting, validatio
           
           <TabsContent value="knowledge" className="space-y-4">
             {chatbot?.id ? (
-              <KnowledgeBaseManager chatbotId={chatbot.id} />
+              <KnowledgeBaseManager 
+                chatbotId={chatbot.id}
+                form={form}
+              />
             ) : (
               <Card>
                 <CardContent className="pt-6">
