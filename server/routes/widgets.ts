@@ -128,10 +128,13 @@ router.get("/widget-embed.js", (req, res) => {
   const apiBaseUrl = `${protocol}://${host}`;
 
   // ORB (Opaque Response Blocking) fix: explicitly allow cross-origin and set correct MIME type
+  res.status(200);
   res.type('text/javascript');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Timing-Allow-Origin', '*');
 
   res.send(`
 (function() {
