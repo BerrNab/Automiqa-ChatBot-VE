@@ -7,6 +7,7 @@ import { z } from "zod";
 import { supabaseStorage as storage } from "../storage-supabase.js";
 import { openaiService } from "./openai.js";
 import { mcpService } from "./mcp.js";
+import { rerankService } from "./rerank-service.js";
 import type { ChatbotConfig } from "../shared/schema.js";
 
 interface ConversationContext {
@@ -40,36 +41,54 @@ export class LangChainAgentService {
       }),
       func: async ({ query }) => {
         try {
-          console.log(`[KB Tool] Searching knowledge base for: "${query}"`);
-          
-          // Create embedding for the query
-          const queryEmbedding = await openaiService.createEmbedding(query);
-          
-          // Search for similar chunks with more results
-          const results = await storage.searchKBChunks(chatbotId, queryEmbedding, 8);
-          
+          console.log(`[KB Tool] Advanced RAG Pipeline started for: "${query}"`);
+
+          // 1. Query Expansion - Generate variations to broaden coverage
+          const queryVariations = await openaiService.generateQueryVariations(query);
+          console.log(`[KB Tool] Expanded query into: ${queryVariations.join(", ")}`);
+
+          // 2. Parallel Retrieval - Search for each variation
+          const retrievalPromises = queryVariations.map(async (v) => {
+            const embedding = await openaiService.createEmbedding(v);
+            return storage.searchKBChunks(chatbotId, embedding, 10, v);
+          });
+
+          const resultsArray = await Promise.all(retrievalPromises);
+
+          // 3. Fusion & Deduplication
+          const allRawResults = resultsArray.flat();
+          const uniqueResults = Array.from(new Map(allRawResults.map(r => [r.text, r])).values());
+
+          if (uniqueResults.length === 0) {
+            console.log('[KB Tool] No results found after expansion');
+            return "NO_RESULTS: No relevant information found in the knowledge base for this query. ASK the user for more details to help refine the search.";
+          }
+
+          // 4. Rerank results for maximum precision (Top 20 candidates -> Top 5)
+          const results = await rerankService.rerankChunks(query, uniqueResults.slice(0, 20), 5);
+
           if (results.length === 0) {
-            console.log('[KB Tool] No results found');
-            return "NO_RESULTS: No relevant information found in the knowledge base for this query. ASK the user for more details to help refine the search. For example: ask them to clarify what specific aspect they're interested in, what type of procedure they need, or provide more context about their situation. Be conversational and helpful.";
+            console.log('[KB Tool] All results filtered after reranking');
+            return "NO_RESULTS: Found some information but it was not directly relevant to your specific question. Could you please provide more context or clarify what you're looking for?";
           }
-          
-          // Check if results have low similarity (< 40%) - might need clarification
-          const avgSimilarity = results.reduce((sum, r) => sum + r.similarity, 0) / results.length;
-          if (avgSimilarity < 0.4) {
-            console.log(`[KB Tool] Low similarity results (avg: ${avgSimilarity.toFixed(2)})`);
-            return `LOW_CONFIDENCE_RESULTS: Found some information but it may not be exactly what the user needs (confidence: ${(avgSimilarity * 100).toFixed(0)}%). ASK clarifying questions to better understand what they're looking for. Here's what was found:\n\n${results.map((r, i) => `${i+1}. ${r.text.substring(0, 200)}...`).join('\n\n')}`;
+
+          // Check if results have low relevance
+          const avgScore = results.reduce((sum, r) => sum + (r.rerankScore || 0), 0) / results.length;
+          if (avgScore < 0.4) {
+            console.log(`[KB Tool] Low relevance results after rerank (avg: ${avgScore.toFixed(2)})`);
+            return `LOW_CONFIDENCE_RESULTS: Found some information but it may not be exactly what you need (confidence: ${(avgScore * 100).toFixed(0)}%). Here's what I found, but please clarify if you need something more specific:\n\n${results.map((r, i) => `${i + 1}. ${r.text.substring(0, 200)}...`).join('\n\n')}`;
           }
-          
+
           // Format results with clear instructions for the agent
           let response = "KNOWLEDGE_BASE_RESULTS:\n\n";
           results.forEach((chunk, idx) => {
-            response += `Result ${idx + 1} (Relevance: ${(chunk.similarity * 100).toFixed(1)}%):\n`;
+            response += `Result ${idx + 1} (Source: ${chunk.filename}, Relevance Score: ${((chunk.rerankScore || 0) * 100).toFixed(1)}%):\n`;
             response += `${chunk.text}\n\n`;
           });
-          
-          response += `\nINSTRUCTIONS: Use the above information to provide a comprehensive, conversational answer. Be friendly and chatty. Synthesize the information naturally without mentioning 'knowledge base' or 'search results'. If the information doesn't fully answer the question, provide what you can and ASK follow-up questions to understand better what they need. Engage in conversation to help them find exactly what they're looking for.`;
-          
-          console.log(`[KB Tool] Found ${results.length} relevant chunks with similarities:`, results.map(r => r.similarity.toFixed(3)));
+
+          response += `\nINSTRUCTIONS: Use the above information to provide a comprehensive, conversational answer. Be friendly and chatty. Synthesize the information naturally. If results are partial, answer what you can and ask for specifics.`;
+
+          console.log(`[KB Tool] Returning ${results.length} reranked chunks`);
           return response;
         } catch (error: any) {
           console.error('[KB Tool] Error:', error);
@@ -106,14 +125,14 @@ export class LangChainAgentService {
         func: async (input) => {
           try {
             console.log('[MCP Tool] Booking appointment:', input);
-            
+
             // Use MCP service to book appointment
             const result = await mcpService.bookAppointment({
               chatbotId: context.chatbotId,
               clientId: context.clientId,
               ...input,
             });
-            
+
             return `Appointment booked successfully! Confirmation: ${JSON.stringify(result)}`;
           } catch (error: any) {
             console.error('[MCP Tool] Appointment booking error:', error);
@@ -137,7 +156,7 @@ export class LangChainAgentService {
         func: async (input) => {
           try {
             console.log('[MCP Tool] Capturing lead:', input);
-            
+
             const result = await storage.createLead({
               chatbotId: context.chatbotId,
               clientId: context.clientId,
@@ -149,7 +168,7 @@ export class LangChainAgentService {
               source: 'widget',
               status: 'new',
             });
-            
+
             return `Contact information saved successfully. Thank you!`;
           } catch (error: any) {
             console.error('[MCP Tool] Lead capture error:', error);
@@ -216,10 +235,10 @@ export class LangChainAgentService {
 
     // Create tools
     const tools: DynamicStructuredTool[] = [];
-    
+
     // Add knowledge base tool
     tools.push(this.createKnowledgeBaseTool(context.chatbotId));
-    
+
     // Add MCP tools
     const mcpTools = await this.createMCPTools(config, context);
     tools.push(...mcpTools);
@@ -228,13 +247,13 @@ export class LangChainAgentService {
 
     // Create enhanced system prompt with tool usage instructions
     let systemPrompt = openaiService.buildSystemPrompt(config);
-    
+
     // FORCE tool usage - completely override any conflicting instructions
     systemPrompt = systemPrompt.replace(
       /If you cannot help.*?respond with:.*?".*?"/gs,
       'BEFORE responding, you MUST use the search_knowledge_base tool to find information.'
     );
-    
+
     // Add critical agent-specific instructions - OVERRIDE the fallback behavior
     systemPrompt += `\n\n**MANDATORY TOOL USAGE - NO EXCEPTIONS:**
 YOU HAVE A TOOL CALLED "search_knowledge_base". 
@@ -298,14 +317,14 @@ DO NOT SKIP THE TOOL. DO NOT ANSWER WITHOUT CALLING IT FIRST.
   ): Promise<string> {
     try {
       console.log(`[Agent] Processing message for chatbot ${context.chatbotId}: "${message.substring(0, 50)}..."`);
-      
+
       // Get or create agent
       const agent = await this.getAgent(config, context);
 
       // Invoke agent with timeout protection
       const result = await Promise.race([
         agent.invoke({ input: message }),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Agent timeout after 30s')), 30000)
         )
       ]) as any;
@@ -317,7 +336,7 @@ DO NOT SKIP THE TOOL. DO NOT ANSWER WITHOUT CALLING IT FIRST.
       }
 
       const output = result.output.trim();
-      
+
       // Check for empty responses
       if (output.length === 0) {
         console.error('[Agent] Empty response generated, using fallback');
@@ -326,7 +345,7 @@ DO NOT SKIP THE TOOL. DO NOT ANSWER WITHOUT CALLING IT FIRST.
       }
 
       console.log(`[Agent] Response generated (${output.length} chars): "${output.substring(0, 100)}..."`);
-      
+
       return output;
     } catch (error: any) {
       console.error('[Agent] Error processing message:', error);

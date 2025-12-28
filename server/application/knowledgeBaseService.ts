@@ -20,10 +20,10 @@ export class KnowledgeBaseService {
 
       // Validate file
       kbService.validateFile(file.buffer, file.mimetype);
-      
+
       // Calculate checksum
       const checksum = kbService.calculateChecksum(file.buffer);
-      
+
       // Check if document already exists - if so, delete it first (override behavior)
       const existingDoc = await storage.getDocumentByChecksum(chatbotId, checksum);
       if (existingDoc) {
@@ -42,9 +42,9 @@ export class KnowledgeBaseService {
 
       // Upload to Supabase storage
       const storagePath = await supabaseService.uploadKBDocument(
-        chatbotId, 
-        file.buffer, 
-        file.originalname, 
+        chatbotId,
+        file.buffer,
+        file.originalname,
         file.mimetype
       );
 
@@ -65,13 +65,13 @@ export class KnowledgeBaseService {
 
       // Process document asynchronously with config-based settings
       this.processDocumentAsync(
-        document.id, 
-        file.buffer, 
-        file.mimetype, 
+        document.id,
+        file.buffer,
+        file.mimetype,
         file.originalname,
         config
       );
-      
+
       return {
         id: document.id,
         filename: file.originalname,
@@ -89,9 +89,9 @@ export class KnowledgeBaseService {
    * Now uses file-type-specific processing and configurable embedding models
    */
   private async processDocumentAsync(
-    documentId: string, 
-    buffer: Buffer, 
-    contentType: string, 
+    documentId: string,
+    buffer: Buffer,
+    contentType: string,
     filename: string,
     chatbotConfig?: ChatbotConfig
   ) {
@@ -104,7 +104,7 @@ export class KnowledgeBaseService {
 
       // Extract chunking strategy from config
       const chunkingStrategy = chatbotConfig?.knowledgeBase?.chunkingStrategy as ChunkingStrategy | undefined;
-      
+
       // Extract embedding config from chatbot settings
       const embeddingConfig: EmbeddingConfig = {
         model: (chatbotConfig?.knowledgeBase?.embeddingModel as any) || "text-embedding-3-large",
@@ -118,8 +118,8 @@ export class KnowledgeBaseService {
 
       // Use the new file-type-specific document processor
       const processingResult = await kbService.processDocument(
-        buffer, 
-        contentType, 
+        buffer,
+        contentType,
         filename,
         chunkingStrategy
       );
@@ -131,26 +131,29 @@ export class KnowledgeBaseService {
       // Process chunks in batches to avoid overwhelming the database and API
       const BATCH_SIZE = 5;
       const DELAY_BETWEEN_BATCHES = 1000;
-      
+
       console.log(`[KnowledgeBase] Processing ${totalChunks} chunks (${processingResult.fileType}) in batches of ${BATCH_SIZE}...`);
-      
+
       // Update document with total chunks count
       await storage.updateKBDocumentProgress(documentId, 0, totalChunks);
-      
+
       for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
         const batch = chunks.slice(i, i + BATCH_SIZE);
         const batchPromises = batch.map(async (chunk, batchIndex) => {
           const index = i + batchIndex;
           let retries = 3;
-          
+
           while (retries > 0) {
             try {
+              // Enrich text with context (Filename) to improve retrieval quality
+              const contextText = `[Doc: ${filename}] ${chunk.text}`;
+
               // Create embedding using the configured model
               const embedding = await embeddingService.createEmbedding(
-                chunk.text,
+                contextText,
                 embeddingConfig
               );
-              
+
               // Store chunk with embedding and enhanced metadata
               await storage.createKBChunk({
                 id: nanoid(),
@@ -171,26 +174,26 @@ export class KnowledgeBaseService {
                   ...chunk.metadata,
                 }
               });
-              
+
               processedChunks++;
-              
+
               // Update progress every batch
               if (processedChunks % BATCH_SIZE === 0 || processedChunks === totalChunks) {
                 await storage.updateKBDocumentProgress(documentId, processedChunks, totalChunks);
-                console.log(`[KnowledgeBase] Progress: ${processedChunks}/${totalChunks} chunks (${Math.round(processedChunks/totalChunks*100)}%)`);
+                console.log(`[KnowledgeBase] Progress: ${processedChunks}/${totalChunks} chunks (${Math.round(processedChunks / totalChunks * 100)}%)`);
               }
-              
+
               break; // Success, exit retry loop
             } catch (error: any) {
               retries--;
-              
+
               // Check for rate limit or network errors
               const isRateLimitError = error.status === 429 || error.status === 403;
               const isFetchError = error.message?.includes('fetch failed');
 
               if ((isRateLimitError || isFetchError) && retries > 0) {
                 const waitTime = (4 - retries) * 5000;
-                console.log(`[KnowledgeBase] Rate limit for chunk ${index}, retrying in ${waitTime/1000}s... (${retries} retries left)`);
+                console.log(`[KnowledgeBase] Rate limit for chunk ${index}, retrying in ${waitTime / 1000}s... (${retries} retries left)`);
                 await new Promise(resolve => setTimeout(resolve, waitTime));
               } else {
                 console.error(`[KnowledgeBase] Failed to process chunk ${index}:`, error);
@@ -199,26 +202,26 @@ export class KnowledgeBaseService {
             }
           }
         });
-        
+
         // Wait for current batch to complete before starting next batch
         await Promise.all(batchPromises);
-        
+
         // Add delay between batches to avoid rate limits
         if (i + BATCH_SIZE < chunks.length) {
           await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
         }
       }
-      
+
       console.log(`[KnowledgeBase] Document ${documentId} processed successfully:`);
       console.log(`  - ${totalChunks} chunks created`);
       console.log(`  - ~${processingResult.totalTokens} tokens`);
       console.log(`  - File type: ${processingResult.fileType}`);
-      
+
       // Update document status to ready
       await storage.updateKBDocumentStatus(documentId, "ready");
     } catch (error: any) {
       console.error(`[KnowledgeBase] Failed to process document ${documentId}:`, error);
-      
+
       // Update document status to error
       await storage.updateKBDocumentStatus(documentId, "error", error.message);
     }
@@ -304,7 +307,7 @@ export class KnowledgeBaseService {
 
       // Delete from database (this will cascade delete chunks)
       await storage.deleteKBDocument(documentId);
-      
+
       return { success: true };
     } catch (error) {
       throw error;
@@ -316,8 +319,8 @@ export class KnowledgeBaseService {
    * Uses the same embedding model that was used to create the chunks
    */
   async searchKnowledgeBase(
-    chatbotId: string, 
-    query: string, 
+    chatbotId: string,
+    query: string,
     limit = 5,
     embeddingConfig?: EmbeddingConfig
   ): Promise<Array<{
@@ -345,10 +348,10 @@ export class KnowledgeBaseService {
         query,
         config
       );
-      
-      // Search for similar chunks
-      const results = await storage.searchKBChunks(chatbotId, queryEmbedding, limit);
-      
+
+      // Search for similar chunks with hybrid search (passing query text)
+      const results = await storage.searchKBChunks(chatbotId, queryEmbedding, limit, query);
+
       return results;
     } catch (error: any) {
       console.error("Knowledge base search failed:", error);

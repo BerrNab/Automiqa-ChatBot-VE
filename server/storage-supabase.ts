@@ -150,7 +150,7 @@ export interface IStorage {
   // Knowledge Base chunks
   createKBChunk(chunk: InsertKBChunk & { id: string }): Promise<KBChunk>;
   getKBChunks(documentId: string): Promise<KBChunk[]>;
-  searchKBChunks(chatbotId: string, queryEmbedding: number[], limit: number): Promise<Array<{
+  searchKBChunks(chatbotId: string, queryEmbedding: number[], limit: number, queryText?: string): Promise<Array<{
     text: string;
     similarity: number;
     filename: string;
@@ -192,7 +192,7 @@ export class SupabaseStorage implements IStorage {
   // Helper function to parse config field
   private parseConfig(config: any): any {
     if (!config) return {};
-    
+
     if (typeof config === 'string') {
       try {
         return JSON.parse(config);
@@ -208,7 +208,7 @@ export class SupabaseStorage implements IStorage {
         console.error('Error parsing config from character indices:', e);
       }
     }
-    
+
     return config;
   }
   // Admin management
@@ -218,7 +218,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error || !data) return undefined;
     return data as Admin;
   }
@@ -229,14 +229,14 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('username', username)
       .single();
-    
+
     if (error || !data) return undefined;
     return data as Admin;
   }
 
   async createAdmin(insertAdmin: InsertAdmin): Promise<Admin> {
     const hashedPassword = await bcrypt.hash(insertAdmin.password, 10);
-    
+
     const { data, error } = await supabaseAdmin
       .from('admins')
       .insert({
@@ -247,7 +247,7 @@ export class SupabaseStorage implements IStorage {
       })
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create admin: ${error.message}`);
     return data as Admin;
   }
@@ -259,7 +259,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error || !data) return undefined;
     return data as Client;
   }
@@ -268,35 +268,35 @@ export class SupabaseStorage implements IStorage {
     const { data: clients, error: clientsError } = await supabase
       .from('clients')
       .select('*');
-    
+
     if (clientsError) throw new Error(`Failed to fetch clients: ${clientsError.message}`);
-    
+
     const result: ClientWithChatbots[] = [];
-    
+
     for (const client of clients) {
       // Get chatbots for this client
       const { data: chatbots, error: chatbotsError } = await supabase
         .from('chatbots')
         .select('*')
         .eq('client_id', client.id);
-      
+
       if (chatbotsError) throw new Error(`Failed to fetch chatbots: ${chatbotsError.message}`);
-      
+
       // Get subscription for this client
       const { data: subscriptions, error: subscriptionsError } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('client_id', client.id);
-      
+
       if (subscriptionsError) throw new Error(`Failed to fetch subscriptions: ${subscriptionsError.message}`);
-      
+
       result.push({
         ...client,
         chatbots: chatbots || [],
         subscription: subscriptions && subscriptions.length > 0 ? subscriptions[0] : null
       } as ClientWithChatbots);
     }
-    
+
     return result;
   }
 
@@ -316,26 +316,26 @@ export class SupabaseStorage implements IStorage {
       })
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create client: ${error.message}`);
     return data as Client;
   }
 
   async updateClient(id: string, updateData: Partial<InsertClient>): Promise<Client> {
     const updateObject: any = {};
-    
+
     if (updateData.name !== undefined) updateObject.name = updateData.name;
     if (updateData.contactEmail !== undefined) updateObject.contact_email = updateData.contactEmail;
     if (updateData.industry !== undefined) updateObject.industry = updateData.industry;
     if (updateData.description !== undefined) updateObject.description = updateData.description;
-    
+
     const { data, error } = await supabaseAdmin
       .from('clients')
       .update(updateObject)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update client: ${error.message}`);
     return data as Client;
   }
@@ -346,7 +346,7 @@ export class SupabaseStorage implements IStorage {
       .from('clients')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw new Error(`Failed to delete client: ${error.message}`);
   }
 
@@ -357,19 +357,19 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error || !data) return undefined;
-    
+
     // Parse config field
     if (data.config) {
       data.config = this.parseConfig(data.config);
     }
-    
+
     // Map snake_case to camelCase for compatibility
     if (data.client_id) {
       (data as any).clientId = data.client_id;
     }
-    
+
     return data as Chatbot;
   }
 
@@ -381,56 +381,56 @@ export class SupabaseStorage implements IStorage {
         *,
         client:clients(*)
       `);
-    
+
     if (error) throw new Error(`Failed to fetch chatbots with clients: ${error.message}`);
-    
+
     // Get subscriptions and stats for each chatbot
     const result: ChatbotWithClient[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     for (const chatbot of data || []) {
       // Parse config field
       if (chatbot.config) {
         chatbot.config = this.parseConfig(chatbot.config);
       }
-      
+
       // Get subscription
       const { data: subscriptions } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('client_id', chatbot.client_id);
-      
+
       // Get message count for today
       const { count: messageCount } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
         .eq('chatbot_id', chatbot.id)
         .gte('created_at', today.toISOString());
-      
+
       // Get total conversations and conversations with responses
       const { count: totalConversations } = await supabase
         .from('conversations')
         .select('*', { count: 'exact', head: true })
         .eq('chatbot_id', chatbot.id);
-      
+
       // Count conversations that have at least one assistant message
       const { data: conversationsWithResponses } = await supabase
         .from('messages')
         .select('conversation_id')
         .eq('chatbot_id', chatbot.id)
         .eq('role', 'assistant');
-      
+
       const uniqueConversationsWithResponses = new Set(
         conversationsWithResponses?.map(m => m.conversation_id) || []
       ).size;
-      
+
       const responseRate = totalConversations && totalConversations > 0
         ? Math.round((uniqueConversationsWithResponses / totalConversations) * 100)
         : 0;
-      
+
       console.log(`[Stats] Chatbot ${chatbot.id}: messages=${messageCount}, conversations=${totalConversations}, withResponses=${uniqueConversationsWithResponses}, rate=${responseRate}%`);
-      
+
       result.push({
         ...chatbot,
         client: chatbot.client,
@@ -439,7 +439,7 @@ export class SupabaseStorage implements IStorage {
         responseRate: responseRate
       } as ChatbotWithClient);
     }
-    
+
     return result;
   }
 
@@ -453,7 +453,7 @@ export class SupabaseStorage implements IStorage {
       `)
       .eq('id', id)
       .single();
-    
+
     // If not found by ID, try to find by widget_url
     if (error || !data) {
       const result = await supabase
@@ -464,24 +464,24 @@ export class SupabaseStorage implements IStorage {
         `)
         .ilike('widget_url', `%${id}%`)
         .single();
-      
+
       data = result.data;
       error = result.error;
     }
-    
+
     if (error || !data) return undefined;
-    
+
     // Parse config field
     if (data.config) {
       data.config = this.parseConfig(data.config);
     }
-    
+
     // Get subscription for this chatbot's client
     const { data: subscriptions } = await supabase
       .from('subscriptions')
       .select('*')
       .eq('client_id', data.client_id);
-    
+
     return {
       ...data,
       client: data.client,
@@ -492,7 +492,7 @@ export class SupabaseStorage implements IStorage {
   async createChatbot(insertChatbot: InsertChatbot & { widgetUrl: string }): Promise<Chatbot> {
     // Ensure config is properly formatted
     const config = this.parseConfig(insertChatbot.config || {});
-    
+
     const { data, error } = await supabaseAdmin
       .from('chatbots')
       .insert({
@@ -508,14 +508,14 @@ export class SupabaseStorage implements IStorage {
       })
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create chatbot: ${error.message}`);
-    
+
     // Parse config field in the response
     if (data && data.config) {
       data.config = this.parseConfig(data.config);
     }
-    
+
     return data as Chatbot;
   }
 
@@ -526,35 +526,35 @@ export class SupabaseStorage implements IStorage {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update chatbot status: ${error.message}`);
-    
+
     // Parse config field in the response
     if (data && data.config) {
       data.config = this.parseConfig(data.config);
     }
-    
+
     return data as Chatbot;
   }
 
   async updateChatbotConfig(id: string, config: any): Promise<Chatbot> {
     // Ensure config is properly formatted
     const parsedConfig = this.parseConfig(config);
-    
+
     const { data, error } = await supabaseAdmin
       .from('chatbots')
       .update({ config: parsedConfig })
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update chatbot config: ${error.message}`);
-    
+
     // Parse config field in the response
     if (data && data.config) {
       data.config = this.parseConfig(data.config);
     }
-    
+
     return data as Chatbot;
   }
 
@@ -565,67 +565,67 @@ export class SupabaseStorage implements IStorage {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update chatbot widget URL: ${error.message}`);
-    
+
     // Parse config field in the response
     if (data && data.config) {
       data.config = this.parseConfig(data.config);
     }
-    
+
     return data as Chatbot;
   }
-  
+
   async updateChatbotDetails(id: string, details: { name?: string; description?: string }): Promise<Chatbot> {
     const updateData: any = {};
     if (details.name !== undefined) updateData.name = details.name;
     if (details.description !== undefined) updateData.description = details.description;
-    
+
     const { data, error } = await supabaseAdmin
       .from('chatbots')
       .update(updateData)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update chatbot details: ${error.message}`);
-    
+
     // Parse config field in the response
     if (data && data.config) {
       data.config = this.parseConfig(data.config);
     }
-    
+
     return data as Chatbot;
   }
 
   async incrementMessageCount(id: string): Promise<void> {
     try {
       console.log(`Incrementing message count for chatbot: ${id}`);
-      
+
       const { data: chatbot, error } = await supabase
         .from('chatbots')
         .select('message_count')
         .eq('id', id)
         .single();
-      
+
       if (error) {
         console.error(`Error fetching chatbot for message count increment:`, error);
         return;
       }
-      
+
       if (!chatbot) {
         console.error(`Chatbot not found for message count increment: ${id}`);
         return;
       }
-      
+
       const { error: updateError } = await supabaseAdmin
         .from('chatbots')
-        .update({ 
+        .update({
           message_count: (chatbot.message_count || 0) + 1,
           updated_at: new Date().toISOString()
         })
         .eq('id', id);
-      
+
       if (updateError) {
         console.error(`Error updating message count:`, updateError);
       } else {
@@ -655,7 +655,7 @@ export class SupabaseStorage implements IStorage {
       })
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create KB document: ${error.message}`);
     return data as KBDocument;
   }
@@ -666,9 +666,9 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error || !data) return undefined;
-    
+
     // Map snake_case to camelCase
     return {
       ...data,
@@ -687,9 +687,9 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('chatbot_id', chatbotId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw new Error(`Failed to fetch KB documents: ${error.message}`);
-    
+
     // Map snake_case to camelCase for all documents
     return (data || []).map(doc => ({
       ...doc,
@@ -709,9 +709,9 @@ export class SupabaseStorage implements IStorage {
       .eq('chatbot_id', chatbotId)
       .eq('checksum', checksum)
       .single();
-    
+
     if (error || !data) return undefined;
-    
+
     // Map snake_case to camelCase
     return {
       ...data,
@@ -725,39 +725,39 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateKBDocumentStatus(id: string, status: string, errorMessage?: string): Promise<KBDocument> {
-    const updateData: any = { 
+    const updateData: any = {
       status,
       updated_at: new Date().toISOString()
     };
-    
+
     if (errorMessage) {
       updateData.error_message = errorMessage;
     }
-    
+
     const { data, error } = await supabaseAdmin
       .from('kb_documents')
       .update(updateData)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update KB document status: ${error.message}`);
     return data as KBDocument;
   }
 
   async updateKBDocumentProgress(id: string, processedChunks: number, totalChunks: number): Promise<void> {
     const progress = Math.round((processedChunks / totalChunks) * 100);
-    
+
     const { error } = await supabaseAdmin
       .from('kb_documents')
-      .update({ 
+      .update({
         processing_progress: progress,
         processed_chunks: processedChunks,
         total_chunks: totalChunks,
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
-    
+
     if (error) {
       console.error(`Failed to update KB document progress: ${error.message}`);
       // Don't throw error, just log it - progress updates shouldn't break the flow
@@ -771,20 +771,20 @@ export class SupabaseStorage implements IStorage {
       .select('storage_path')
       .eq('id', id)
       .single();
-    
+
     if (document) {
       // Delete from Supabase Storage
       await supabaseAdmin.storage
         .from('knowledge-base-docs')
         .remove([document.storage_path]);
     }
-    
+
     // Delete the document record (cascades to chunks)
     const { error } = await supabaseAdmin
       .from('kb_documents')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw new Error(`Failed to delete KB document: ${error.message}`);
   }
 
@@ -804,7 +804,7 @@ export class SupabaseStorage implements IStorage {
       })
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create KB chunk: ${error.message}`);
     return data as KBChunk;
   }
@@ -815,21 +815,38 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('document_id', documentId)
       .order('chunk_index', { ascending: true });
-    
+
     if (error) throw new Error(`Failed to fetch KB chunks: ${error.message}`);
     return data as KBChunk[];
   }
 
-  async searchKBChunks(chatbotId: string, queryEmbedding: number[], limit: number): Promise<Array<{
+  async searchKBChunks(chatbotId: string, queryEmbedding: number[], limit: number, queryText?: string): Promise<Array<{
     text: string;
     similarity: number;
     filename: string;
     metadata: any;
   }>> {
     try {
-      // Use the pgvector extension to find similar content
-      // Lower threshold (0.5) to capture more potentially relevant results
-      // The agent will filter and synthesize the best information
+      // Use hybrid search if query text is provided, otherwise fallback to vector search
+      if (queryText) {
+        console.log(`[SupabaseStorage] Performing hybrid search for: "${queryText}"`);
+        const { data, error } = await supabase.rpc('hybrid_match_documents', {
+          query_embedding: queryEmbedding,
+          query_text: queryText,
+          match_threshold: 0.3, // Lower threshold for hybrid to capture more candidates
+          match_count: limit,
+          p_chatbot_id: chatbotId
+        });
+
+        if (error) {
+          console.error('Error in hybrid search:', error);
+          // Fallback to vector search on error
+        } else {
+          return data || [];
+        }
+      }
+
+      // Traditional vector search (pgvector cosine similarity)
       const { data, error } = await supabase.rpc('match_documents', {
         query_embedding: queryEmbedding,
         match_threshold: 0.5,
@@ -854,7 +871,7 @@ export class SupabaseStorage implements IStorage {
       .from('kb_chunks')
       .delete()
       .eq('document_id', documentId);
-    
+
     if (error) throw new Error(`Failed to delete KB chunks: ${error.message}`);
   }
 
@@ -868,7 +885,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error || !data) return undefined;
     return data as Subscription;
   }
@@ -881,15 +898,15 @@ export class SupabaseStorage implements IStorage {
         client:clients(*),
         chatbot:chatbots(*)
       `);
-    
+
     if (statusFilter && statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
     }
-    
+
     const { data, error } = await query;
-    
+
     if (error) throw new Error(`Failed to fetch subscriptions: ${error.message}`);
-    
+
     return (data || []).map(sub => ({
       ...sub,
       client: sub.client,
@@ -913,7 +930,7 @@ export class SupabaseStorage implements IStorage {
       })
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create subscription: ${error.message}`);
     return data as Subscription;
   }
@@ -924,7 +941,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error || !data) return undefined;
     return data as PaymentLog;
   }
@@ -942,17 +959,17 @@ export class SupabaseStorage implements IStorage {
           )
         )
       `);
-    
+
     if (statusFilter) {
       query = query.eq('status', statusFilter);
     }
-    
+
     if (dateFilter) {
       query = query.gte('created_at', dateFilter);
     }
-    
+
     const { data, error } = await query.order('created_at', { ascending: false });
-    
+
     if (error) throw new Error(`Failed to get payments: ${error.message}`);
     return data || [];
   }
@@ -971,7 +988,7 @@ export class SupabaseStorage implements IStorage {
       })
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create payment log: ${error.message}`);
     return data as PaymentLog;
   }
@@ -983,7 +1000,7 @@ export class SupabaseStorage implements IStorage {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update payment status: ${error.message}`);
     return data as PaymentLog;
   }
@@ -994,37 +1011,37 @@ export class SupabaseStorage implements IStorage {
     const { count: totalClients } = await supabaseAdmin
       .from('clients')
       .select('*', { count: 'exact', head: true });
-    
+
     // Get active chatbots
     const { count: activeChatbots } = await supabaseAdmin
       .from('chatbots')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active');
-    
+
     // Get monthly revenue from active subscriptions
     const { data: subscriptions } = await supabaseAdmin
       .from('subscriptions')
       .select('monthly_amount')
       .eq('status', 'active');
-    
+
     const monthlyRevenue = subscriptions?.reduce((sum, sub) => sum + (sub.monthly_amount || 0), 0) || 0;
-    
+
     // Calculate trial conversion rate
     const { count: totalTrials } = await supabaseAdmin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .eq('type', 'trial');
-    
+
     const { count: convertedTrials } = await supabaseAdmin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .neq('type', 'trial')
       .not('trial_end', 'is', null);
-    
-    const trialConversionRate = totalTrials && totalTrials > 0 
-      ? ((convertedTrials || 0) / totalTrials) * 100 
+
+    const trialConversionRate = totalTrials && totalTrials > 0
+      ? ((convertedTrials || 0) / totalTrials) * 100
       : 0;
-    
+
     return {
       totalClients: totalClients || 0,
       activeChatbots: activeChatbots || 0,
@@ -1044,22 +1061,22 @@ export class SupabaseStorage implements IStorage {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active')
       .neq('type', 'trial');
-    
+
     const { count: freeTrial } = await supabaseAdmin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'trial');
-    
+
     const { count: paymentDue } = await supabaseAdmin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'payment_due');
-    
+
     const { count: expired } = await supabaseAdmin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'expired');
-    
+
     return {
       activePaid: activePaid || 0,
       freeTrial: freeTrial || 0,
@@ -1072,17 +1089,17 @@ export class SupabaseStorage implements IStorage {
     const { data: payments } = await supabaseAdmin
       .from('payment_logs')
       .select('amount, status');
-    
+
     const totalRevenue = payments
       ?.filter(p => p.status === 'completed')
       .reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-    
+
     const failedPayments = payments?.filter(p => p.status === 'failed').length || 0;
     const totalPayments = payments?.length || 0;
-    const successRate = totalPayments > 0 
-      ? ((totalPayments - failedPayments) / totalPayments) * 100 
+    const successRate = totalPayments > 0
+      ? ((totalPayments - failedPayments) / totalPayments) * 100
       : 0;
-    
+
     return {
       totalRevenue,
       failedPayments,
@@ -1103,7 +1120,7 @@ export class SupabaseStorage implements IStorage {
         )
       `)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw new Error(`Failed to get widgets with analytics: ${error.message}`);
     return data || [];
   }
@@ -1112,10 +1129,10 @@ export class SupabaseStorage implements IStorage {
   async trackWidgetView(chatbotId: string): Promise<void> {
     try {
       console.log(`Tracking widget view for chatbot: ${chatbotId}`);
-      
+
       // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Check if we already have an analytics record for today
       const { data: existingRecord } = await supabase
         .from('widget_analytics')
@@ -1123,7 +1140,7 @@ export class SupabaseStorage implements IStorage {
         .eq('chatbot_id', chatbotId)
         .eq('date', today)
         .single();
-      
+
       if (existingRecord) {
         // Update existing record
         await supabase
@@ -1150,10 +1167,10 @@ export class SupabaseStorage implements IStorage {
   async trackWidgetInteraction(chatbotId: string): Promise<void> {
     try {
       console.log(`Tracking widget interaction for chatbot: ${chatbotId}`);
-      
+
       // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Check if we already have an analytics record for today
       const { data: existingRecord } = await supabase
         .from('widget_analytics')
@@ -1161,7 +1178,7 @@ export class SupabaseStorage implements IStorage {
         .eq('chatbot_id', chatbotId)
         .eq('date', today)
         .single();
-      
+
       if (existingRecord) {
         // Update existing record
         await supabase
@@ -1194,13 +1211,13 @@ export class SupabaseStorage implements IStorage {
         contentType: mimeType,
         upsert: true
       });
-    
+
     if (error) throw new Error(`Failed to upload logo: ${error.message}`);
-    
+
     const { data } = supabaseAdmin.storage
       .from('chatbot-logos')
       .getPublicUrl(filename);
-    
+
     return data.publicUrl;
   }
 
@@ -1208,11 +1225,11 @@ export class SupabaseStorage implements IStorage {
     // Extract filename from URL
     const urlParts = logoUrl.split('/');
     const filename = urlParts[urlParts.length - 1];
-    
+
     const { error } = await supabaseAdmin.storage
       .from('chatbot-logos')
       .remove([filename]);
-    
+
     if (error) throw new Error(`Failed to delete logo: ${error.message}`);
   }
 
@@ -1223,7 +1240,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('auth_email', authEmail)
       .single();
-    
+
     if (error || !data) return undefined;
     return data as Client;
   }
@@ -1238,7 +1255,7 @@ export class SupabaseStorage implements IStorage {
       .eq('id', clientId)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to set client credentials: ${error.message}`);
     return data as Client;
   }
@@ -1268,14 +1285,14 @@ export class SupabaseStorage implements IStorage {
       } as any)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create appointment: ${error.message}`);
     return data as Appointment;
   }
 
   async getAppointmentsByClientId(clientId: string): Promise<AppointmentWithClient[]> {
     const { data, error } = await supabaseAdmin
-      .from('appointments') 
+      .from('appointments')
       .select(`
         *,
         chatbot:chatbots(
@@ -1289,7 +1306,7 @@ export class SupabaseStorage implements IStorage {
       `)
       .eq('client_id', clientId)
       .order('appointment_date', { ascending: false });
-    
+
     if (error) throw new Error(`Failed to get appointments: ${error.message}`);
     return (data || []) as AppointmentWithClient[];
   }
@@ -1300,14 +1317,14 @@ export class SupabaseStorage implements IStorage {
     if ((appointmentData as any).appointmentTime !== undefined) updateData.appointment_time = (appointmentData as any).appointmentTime;
     if ((appointmentData as any).status !== undefined) updateData.status = (appointmentData as any).status;
     if ((appointmentData as any).notes !== undefined) updateData.notes = (appointmentData as any).notes;
-    
+
     const { data, error } = await supabaseAdmin
       .from('appointments')
       .update(updateData as any)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update appointment: ${error.message}`);
     return data as Appointment;
   }
@@ -1317,7 +1334,7 @@ export class SupabaseStorage implements IStorage {
       .from('appointments')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw new Error(`Failed to delete appointment: ${error.message}`);
   }
 
@@ -1340,7 +1357,7 @@ export class SupabaseStorage implements IStorage {
       } as any)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create lead: ${error.message}`);
     return data as Lead;
   }
@@ -1361,7 +1378,7 @@ export class SupabaseStorage implements IStorage {
       `)
       .eq('client_id', clientId)
       .order('captured_at', { ascending: false });
-    
+
     if (error) throw new Error(`Failed to get leads: ${error.message}`);
     return (data || []) as LeadWithClient[];
   }
@@ -1372,7 +1389,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('chatbot_id', chatbotId)
       .order('captured_at', { ascending: false });
-    
+
     if (error) throw new Error(`Failed to get leads: ${error.message}`);
     return (data || []) as Lead[];
   }
@@ -1384,14 +1401,14 @@ export class SupabaseStorage implements IStorage {
     if ((leadData as any).phone !== undefined) updateData.phone = (leadData as any).phone;
     if ((leadData as any).status !== undefined) updateData.status = (leadData as any).status;
     if ((leadData as any).notes !== undefined) updateData.notes = (leadData as any).notes;
-    
+
     const { data, error } = await supabaseAdmin
       .from('leads')
       .update(updateData as any)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update lead: ${error.message}`);
     return data as Lead;
   }
@@ -1401,14 +1418,14 @@ export class SupabaseStorage implements IStorage {
     if (notes !== undefined) {
       updateData.notes = notes;
     }
-    
+
     const { data, error } = await supabaseAdmin
       .from('leads')
       .update(updateData as any)
       .eq('id', leadId)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to update lead status: ${error.message}`);
     return data as Lead;
   }
@@ -1418,7 +1435,7 @@ export class SupabaseStorage implements IStorage {
       .from('leads')
       .delete()
       .eq('id', id);
-    
+
     if (error) throw new Error(`Failed to delete lead: ${error.message}`);
   }
 
@@ -1427,7 +1444,7 @@ export class SupabaseStorage implements IStorage {
       .from('leads')
       .select('*')
       .eq('chatbot_id', chatbotId);
-    
+
     if (conversationId) {
       query = query.eq('conversation_id', conversationId);
     } else if (email) {
@@ -1435,9 +1452,9 @@ export class SupabaseStorage implements IStorage {
     } else {
       return undefined;
     }
-    
+
     const { data, error } = await query.single();
-    
+
     if (error || !data) return undefined;
     return data as Lead;
   }
@@ -1451,7 +1468,7 @@ export class SupabaseStorage implements IStorage {
       .eq('chatbot_id', (conversationData as any).chatbotId)
       .eq('session_id', (conversationData as any).sessionId)
       .single();
-    
+
     if (existing) {
       // Update existing conversation
       const { data, error } = await supabaseAdmin
@@ -1462,7 +1479,7 @@ export class SupabaseStorage implements IStorage {
         .eq('id', (existing as any).id)
         .select()
         .single();
-      
+
       if (error) throw new Error(`Failed to update conversation: ${error.message}`);
       return data as Conversation;
     } else {
@@ -1471,7 +1488,7 @@ export class SupabaseStorage implements IStorage {
       if (!chatbot) {
         throw new Error('Chatbot not found');
       }
-      
+
       const { data, error } = await supabaseAdmin
         .from('conversations')
         .insert({
@@ -1483,7 +1500,7 @@ export class SupabaseStorage implements IStorage {
         } as any)
         .select()
         .single();
-      
+
       if (error) throw new Error(`Failed to create conversation: ${error.message}`);
       return data as Conversation;
     }
@@ -1500,7 +1517,7 @@ export class SupabaseStorage implements IStorage {
       `)
       .eq('chatbot.client_id', clientId)
       .order('last_message_at', { ascending: false });
-    
+
     if (error) throw new Error(`Failed to get conversations: ${error.message}`);
     return (data || []) as Conversation[];
   }
@@ -1514,7 +1531,7 @@ export class SupabaseStorage implements IStorage {
       `)
       .eq('id', id)
       .single();
-    
+
     if (error || !data) return undefined;
     return data as ConversationWithMessages;
   }
@@ -1532,7 +1549,7 @@ export class SupabaseStorage implements IStorage {
       } as any)
       .select()
       .single();
-    
+
     if (error) throw new Error(`Failed to create message: ${error.message}`);
     return data as Message;
   }
@@ -1543,7 +1560,7 @@ export class SupabaseStorage implements IStorage {
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
-    
+
     if (error) throw new Error(`Failed to get messages: ${error.message}`);
     return (data || []) as Message[];
   }

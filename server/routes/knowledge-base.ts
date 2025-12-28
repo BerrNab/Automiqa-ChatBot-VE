@@ -19,12 +19,16 @@ const upload = multer({
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain',
-      'application/json'
+      'application/json',
+      'text/csv',
+      'application/csv',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel'
     ];
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, TXT, and JSON files are allowed.'));
+      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, TXT, JSON, CSV, and Excel files are allowed.'));
     }
   },
 });
@@ -33,7 +37,7 @@ const upload = multer({
 router.post("/admin/chatbots/:chatbotId/kb/upload", requireAdminAuth, upload.single('document'), async (req, res) => {
   try {
     const { chatbotId } = req.params;
-    
+
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
@@ -45,7 +49,7 @@ router.post("/admin/chatbots/:chatbotId/kb/upload", requireAdminAuth, upload.sin
     if (error.message === "Chatbot not found") {
       return res.status(404).json({ message: error.message });
     }
-    res.status(500).json({ 
+    res.status(500).json({
       message: error.message || "Failed to upload document",
     });
   }
@@ -70,11 +74,11 @@ router.get("/admin/chatbots/:chatbotId/kb/documents/:documentId", requireAdminAu
   try {
     const { chatbotId, documentId } = req.params;
     const document = await knowledgeBaseService.getDocumentStatus(chatbotId, documentId);
-    
+
     if (!document) {
       return res.status(404).json({ message: "Document not found" });
     }
-    
+
     res.json(document);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -92,7 +96,7 @@ router.delete("/admin/chatbots/:chatbotId/kb/documents/:documentId", requireAdmi
     if (error.message === "Chatbot not found") {
       return res.status(404).json({ message: error.message });
     }
-    res.status(500).json({ 
+    res.status(500).json({
       message: error.message || "Failed to delete document",
     });
   }

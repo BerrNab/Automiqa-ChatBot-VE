@@ -45,14 +45,14 @@ export class SimpleChatService {
       let kbResults = '';
       if (config.knowledgeBase) {
         console.log('[SimpleChat] Searching knowledge base...');
-        
+
         try {
           // Create embedding for the query
           const queryEmbedding = await openaiService.createEmbedding(message);
-          
-          // Search for similar chunks
-          const results = await storage.searchKBChunks(context.chatbotId, queryEmbedding, 5);
-          
+
+          // Search for similar chunks (using hybrid search)
+          const results = await storage.searchKBChunks(context.chatbotId, queryEmbedding, 5, message);
+
           if (results.length > 0) {
             console.log(`[SimpleChat] Found ${results.length} relevant chunks`);
             kbResults = '\n\nRELEVANT INFORMATION FROM KNOWLEDGE BASE:\n';
@@ -101,7 +101,7 @@ CRITICAL RULES:
 
       const response = await model.invoke(messages);
       let responseText = response.content.toString();
-      
+
       // Extract suggested prompts if present
       const promptMatch = responseText.match(/---SUGGESTED_PROMPTS---([\s\S]*?)---END_PROMPTS---/);
       if (promptMatch) {
@@ -110,7 +110,7 @@ CRITICAL RULES:
           .split('\n')
           .filter(p => p.trim())
           .slice(0, 3); // Max 3 prompts
-        
+
         // Remove the prompts section from the response
         responseText = responseText.replace(/---SUGGESTED_PROMPTS---[\s\S]*?---END_PROMPTS---/, '').trim();
       }
