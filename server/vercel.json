@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "index.ts": {
-      "maxDuration": 3000
+      "maxDuration": 900
     }
   },
   "builds": [
@@ -10,7 +10,9 @@
       "src": "index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["**"]
+        "includeFiles": [
+          "**"
+        ]
       }
     }
   ],
