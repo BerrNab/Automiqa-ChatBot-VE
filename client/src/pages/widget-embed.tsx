@@ -20,7 +20,7 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   responseOptions?: string[];
-  links?: Array<{title: string, url: string}>;
+  links?: Array<{ title: string, url: string }>;
 }
 
 interface LeadInfo {
@@ -50,14 +50,14 @@ const TypingIndicator = ({ primaryColor = "#3B82F6" }: TypingIndicatorProps) => 
 
 // SVG Wave Pattern Component
 const WavePattern = ({ color = "#3B82F6", opacity = 0.1 }: { color?: string; opacity?: number }) => (
-  <svg 
-    className="absolute bottom-0 left-0 w-full" 
-    viewBox="0 0 1200 120" 
+  <svg
+    className="absolute bottom-0 left-0 w-full"
+    viewBox="0 0 1200 120"
     preserveAspectRatio="none"
     style={{ height: '40px', transform: 'translateY(1px)' }}
   >
-    <path 
-      d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" 
+    <path
+      d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
       fill={color}
       fillOpacity={opacity}
     />
@@ -65,11 +65,11 @@ const WavePattern = ({ color = "#3B82F6", opacity = 0.1 }: { color?: string; opa
 );
 
 // Lead capture form component
-const LeadCaptureForm = ({ 
-  config, 
-  onSubmit, 
-  onCancel, 
-  existingInfo 
+const LeadCaptureForm = ({
+  config,
+  onSubmit,
+  onCancel,
+  existingInfo
 }: {
   config: ChatbotConfig | undefined;
   onSubmit: (leadInfo: LeadInfo) => void;
@@ -78,14 +78,14 @@ const LeadCaptureForm = ({
 }) => {
   const [leadInfo, setLeadInfo] = useState<LeadInfo>(existingInfo);
   const fields = config?.leadCapture?.fields;
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(leadInfo);
   };
-  
+
   const primaryColor = config?.branding?.primaryColor || '#3B82F6';
-  
+
   return (
     <Card className="my-3 border-0 shadow-sm bg-gray-50">
       <CardContent className="p-4">
@@ -170,14 +170,23 @@ export default function WidgetEmbed() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const autoOpenTimeoutRef = useRef<NodeJS.Timeout>();
   const [sessionId] = useState(`widget-${Date.now()}`);
-  
+
+  // Notify parent about open/close state for resizing
+  useEffect(() => {
+    window.parent.postMessage({
+      type: 'widget-status',
+      isOpen: isWidgetOpen,
+      isMinimized: isMinimized
+    }, '*');
+  }, [isWidgetOpen, isMinimized]);
+
   // Pre-chat form states
   const [userDetailsProvided, setUserDetailsProvided] = useState(false);
   const [userName, setUserName] = useState("");
   const [userPhone, setUserPhone] = useState("");
   const [preChatError, setPreChatError] = useState("");
   const [isPreChatSubmitting, setIsPreChatSubmitting] = useState(false);
-  
+
   // Language and RTL states
   const [currentLanguage, setCurrentLanguage] = useState<string>("en");
   const [isRTL, setIsRTL] = useState(false);
@@ -190,29 +199,29 @@ export default function WidgetEmbed() {
   // Cast config to ChatbotConfig type for proper typing
   const config = chatbot?.config as ChatbotConfig | undefined;
   const theme = config?.widgetSettings?.designTheme || 'soft';
-  
+
   // Initialize language from config
   useEffect(() => {
     if (config?.widgetSettings?.defaultLanguage) {
       const defaultLang = config.widgetSettings.defaultLanguage;
       setCurrentLanguage(defaultLang);
-      
+
       // Check if the language is RTL
       const lang = config.widgetSettings.supportedLanguages?.find(l => l.code === defaultLang);
       setIsRTL(lang?.rtl || false);
     }
   }, [config]);
-  
+
   // Handle language change
   const handleLanguageChange = (languageCode: string) => {
     setCurrentLanguage(languageCode);
     const lang = config?.widgetSettings?.supportedLanguages?.find(l => l.code === languageCode);
     setIsRTL(lang?.rtl || false);
   };
-  
+
   // Get translations for current language
   const t = getTranslations(currentLanguage);
-  
+
   // Get theme-specific classes
   const getThemeClasses = () => {
     switch (theme) {
@@ -241,13 +250,13 @@ export default function WidgetEmbed() {
         b: parseInt(result[3], 16)
       } : { r: 255, g: 255, b: 255 };
     };
-    
+
     const rgb = hexToRgb(config?.branding?.primaryColor || '#3B82F6');
     // Mix white with primary color (80% white, 20% primary)
     const mixedR = Math.round(255 * 0.8 + rgb.r * 0.2);
     const mixedG = Math.round(255 * 0.8 + rgb.g * 0.2);
     const mixedB = Math.round(255 * 0.8 + rgb.b * 0.2);
-    
+
     return {
       background: `rgba(${mixedR}, ${mixedG}, ${mixedB}, ${opacity})`,
       backdropFilter: 'blur(10px) saturate(180%)',
@@ -258,12 +267,12 @@ export default function WidgetEmbed() {
 
   const getHeaderStyle = (): React.CSSProperties => {
     const primaryColor = config?.branding?.primaryColor || '#3B82F6';
-    
+
     const baseStyle: React.CSSProperties = {
       color: 'white',
       padding: '16px',
     };
-    
+
     if (theme === 'sleek') {
       return {
         backgroundColor: primaryColor,
@@ -301,7 +310,7 @@ export default function WidgetEmbed() {
         padding: '20px',
       };
     }
-    
+
     return {
       ...baseStyle,
       backgroundColor: primaryColor,
@@ -324,7 +333,7 @@ export default function WidgetEmbed() {
     const userMessageBgColor = config?.branding?.userMessageBgColor || primaryColor;
     const botMessageBgColor = config?.branding?.botMessageBgColor || '#F3F4F6';
     const textColor = isLightColor(userMessageBgColor) ? '#000000' : '#ffffff';
-    
+
     if (isUser) {
       if (theme === 'sleek') {
         return {
@@ -424,10 +433,10 @@ export default function WidgetEmbed() {
     // If business hours are disabled, always return true (24/7 availability)
     if (!config?.businessHours?.enabled) return true;
     if (!config?.businessHours?.schedule) return true;
-    
+
     const now = new Date();
     const timezone = config.businessHours.timezone || 'America/New_York';
-    
+
     try {
       const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: timezone,
@@ -436,18 +445,18 @@ export default function WidgetEmbed() {
         hour12: false,
         weekday: 'long'
       });
-      
+
       const parts = formatter.formatToParts(now);
       const weekday = parts.find(p => p.type === 'weekday')?.value?.toLowerCase() || 'monday';
       const hour = parts.find(p => p.type === 'hour')?.value || '00';
       const minute = parts.find(p => p.type === 'minute')?.value || '00';
-      
+
       const currentTime = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
-      
+
       const todaySchedule = config.businessHours.schedule[weekday as keyof typeof config.businessHours.schedule];
-      
+
       if (!todaySchedule || todaySchedule.closed) return false;
-      
+
       return currentTime >= todaySchedule.open && currentTime <= todaySchedule.close;
     } catch (error) {
       console.error('Error checking business hours:', error);
@@ -458,29 +467,29 @@ export default function WidgetEmbed() {
   // Check for existing user details in sessionStorage OR skip if lead capture disabled
   useEffect(() => {
     if (!chatbotId || !config) return;
-    
+
     console.log('[Embed] Lead capture config:', config.leadCapture);
     console.log('[Embed] Lead capture enabled:', config.leadCapture?.enabled);
-    
+
     // If lead capture is disabled, skip the pre-chat form entirely
     if (!config.leadCapture?.enabled) {
       console.log('[Embed] Lead capture is disabled, skipping pre-chat form');
       setUserDetailsProvided(true);
       return;
     }
-    
+
     console.log('[Embed] Lead capture is enabled, checking for stored details');
-    
+
     // Otherwise check for stored details
     const storageKey = `chatbot_user_${chatbotId}`;
     const storedDetails = sessionStorage.getItem(storageKey);
-    
+
     if (storedDetails) {
       try {
         const details: UserDetails = JSON.parse(storedDetails);
         const dayInMs = 24 * 60 * 60 * 1000;
         const isRecent = Date.now() - details.timestamp < dayInMs;
-        
+
         if (isRecent) {
           setUserName(details.name);
           setUserPhone(details.phone);
@@ -501,7 +510,7 @@ export default function WidgetEmbed() {
     if (!config || !userDetailsProvided) return;
 
     const welcomeMsg = config.behavior?.welcomeMessage || "Welcome to our service. How can I help you today?";
-    
+
     setMessages([
       {
         id: "welcome",
@@ -547,7 +556,7 @@ export default function WidgetEmbed() {
   };
 
   const handleResponseOption = (option: string, messageId: string) => {
-    setMessages((prev) => prev.map(msg => 
+    setMessages((prev) => prev.map(msg =>
       msg.id === messageId ? { ...msg, responseOptions: undefined } : msg
     ));
     sendMessage(option);
@@ -573,7 +582,7 @@ export default function WidgetEmbed() {
       /i am ([A-Z][a-z]+(\s[A-Z][a-z]+)?)/i,
       /call me ([A-Z][a-z]+(\s[A-Z][a-z]+)?)/i,
     ];
-    
+
     for (const pattern of namePatterns) {
       const match = text.match(pattern);
       if (match) return match[1];
@@ -583,7 +592,7 @@ export default function WidgetEmbed() {
 
   const captureLead = async (leadInfo: LeadInfo, isFromForm: boolean = false) => {
     if (!chatbotId || !config?.leadCapture?.enabled) return;
-    
+
     try {
       const response = await apiRequest("POST", `/api/widget/${chatbotId}/capture-lead`, {
         ...leadInfo,
@@ -591,11 +600,11 @@ export default function WidgetEmbed() {
         source: "widget",
         message: leadInfo.message || messages[0]?.content || "No initial message",
       });
-      
+
       if (response.ok) {
         setLeadCaptured(true);
         setCapturedLeadInfo((prev) => ({ ...prev, ...leadInfo }));
-        
+
         if (isFromForm) {
           // Add thank you message
           const thankYouMessage: ChatMessage = {
@@ -611,12 +620,12 @@ export default function WidgetEmbed() {
       console.error("Failed to capture lead:", error);
     }
   };
-  
+
   const handleLeadFormSubmit = (leadInfo: LeadInfo) => {
     setShowLeadForm(false);
     captureLead(leadInfo, true);
   };
-  
+
   const handleLeadFormCancel = () => {
     setShowLeadForm(false);
     setLeadCaptured(true); // Mark as captured to avoid asking again
@@ -638,13 +647,13 @@ export default function WidgetEmbed() {
     setIsLoading(true);
     setShowTyping(true);
     setMessageCount((prev) => prev + 1);
-    
+
     // Detect lead information if enabled
     if (config?.leadCapture?.enabled && config?.leadCapture?.detectFromMessages && !leadCaptured) {
       const detectedEmail = detectEmail(textToSend);
       const detectedPhone = detectPhone(textToSend);
       const detectedName = detectName(textToSend);
-      
+
       if (detectedEmail || detectedPhone || detectedName) {
         const newLeadInfo = {
           ...capturedLeadInfo,
@@ -653,7 +662,7 @@ export default function WidgetEmbed() {
           ...(detectedName && { name: detectedName }),
         };
         setCapturedLeadInfo(newLeadInfo);
-        
+
         // Capture lead if we have at least an email or phone
         if (newLeadInfo.email || newLeadInfo.phone) {
           await captureLead(newLeadInfo, false);
@@ -666,9 +675,9 @@ export default function WidgetEmbed() {
         message: textToSend,
         sessionId,
       });
-      
+
       const data = await response.json();
-      
+
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -677,14 +686,14 @@ export default function WidgetEmbed() {
         responseOptions: data.responseOptions,
         links: data.links,
       };
-      
+
       setMessages((prev) => [...prev, assistantMessage]);
-      
+
       // Check if should ask for lead after specified messages
       if (
-        config?.leadCapture?.enabled && 
-        config?.leadCapture?.autoAskForLead && 
-        !leadCaptured && 
+        config?.leadCapture?.enabled &&
+        config?.leadCapture?.autoAskForLead &&
+        !leadCaptured &&
         !showLeadForm &&
         messageCount >= (config?.leadCapture?.askAfterMessages || 3)
       ) {
@@ -715,27 +724,27 @@ export default function WidgetEmbed() {
   const handlePreChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPreChatError("");
-    
+
     // Validate inputs
     if (!userName.trim()) {
       setPreChatError("Please enter your name");
       return;
     }
-    
+
     if (!userPhone.trim()) {
       setPreChatError("Please enter your phone number");
       return;
     }
-    
+
     // Basic phone validation - just check for some digits
     const phoneDigits = userPhone.replace(/\D/g, '');
     if (phoneDigits.length < 5) {
       setPreChatError("Please enter a valid phone number");
       return;
     }
-    
+
     setIsPreChatSubmitting(true);
-    
+
     // Save to sessionStorage
     const userDetails: UserDetails = {
       name: userName.trim(),
@@ -743,7 +752,7 @@ export default function WidgetEmbed() {
       timestamp: Date.now()
     };
     sessionStorage.setItem(`chatbot_user_${chatbotId}`, JSON.stringify(userDetails));
-    
+
     // Create lead in background (don't wait for response)
     apiRequest("POST", `/api/widget/${chatbotId}/capture-lead`, {
       name: userName.trim(),
@@ -754,7 +763,7 @@ export default function WidgetEmbed() {
       console.error('Error creating lead from pre-chat form:', error);
       // Continue anyway - don't block the chat
     });
-    
+
     // Small delay for better UX
     setTimeout(() => {
       setUserDetailsProvided(true);
@@ -795,13 +804,9 @@ export default function WidgetEmbed() {
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
                 className={cn(
-                  "fixed z-50 rounded-full shadow-lg w-14 h-14 widget-button",
+                  "absolute z-50 rounded-full shadow-lg w-14 h-14 widget-button",
                   "transition-all duration-300 hover:scale-110 active:scale-95",
-                  config?.widgetSettings?.position === "bottom-left" && "bottom-4 left-4",
-                  config?.widgetSettings?.position === "bottom-right" && "bottom-4 right-4",
-                  config?.widgetSettings?.position === "top-left" && "top-4 left-4",
-                  config?.widgetSettings?.position === "top-right" && "top-4 right-4",
-                  !config?.widgetSettings?.position && "bottom-4 right-4"
+                  "bottom-3 right-3"
                 )}
                 style={{
                   backgroundColor: primaryColor,
@@ -826,34 +831,29 @@ export default function WidgetEmbed() {
       {isWidgetOpen && shouldShowOnMobile() && (
         <Card
           className={cn(
-            "fixed z-50 flex flex-col",
+            "absolute inset-0 z-50 flex flex-col",
             "transition-all duration-300",
             getThemeClasses(),
-            config?.widgetSettings?.position === "bottom-left" && "bottom-4 left-4",
-            config?.widgetSettings?.position === "bottom-right" && "bottom-4 right-4",
-            config?.widgetSettings?.position === "top-left" && "top-4 left-4",
-            config?.widgetSettings?.position === "top-right" && "top-4 right-4",
-            !config?.widgetSettings?.position && "bottom-4 right-4",
-            isMinimized ? "w-80 h-16" : "w-96 h-[600px]",
+            isMinimized ? "h-16 mt-auto" : "h-full",
             theme === 'wave' && "overflow-hidden"
           )}
           dir={isRTL ? "rtl" : "ltr"}
           style={{
             animation: 'scaleIn 0.3s ease-out',
             borderRadius: theme === 'sleek' ? '0' : theme === 'soft' ? '32px' : theme === 'elevated' ? '28px' : theme === 'minimal' ? '8px' : '16px',
-            boxShadow: theme === 'elevated' 
+            boxShadow: theme === 'elevated'
               ? '0 25px 60px rgba(0, 0, 0, 0.2), 0 10px 30px rgba(0, 0, 0, 0.15)'
               : theme === 'sleek'
-              ? '0 8px 24px rgba(0, 0, 0, 0.12), -4px 0 0 0 ' + (config?.branding?.primaryColor || '#3B82F6')
-              : theme === 'soft'
-              ? '0 8px 32px rgba(0, 0, 0, 0.12)'
-              : theme === 'glass'
-              ? '0 8px 32px rgba(0, 0, 0, 0.08)'
-              : '0 1px 3px rgba(0, 0, 0, 0.12)',
+                ? '0 8px 24px rgba(0, 0, 0, 0.12), -4px 0 0 0 ' + (config?.branding?.primaryColor || '#3B82F6')
+                : theme === 'soft'
+                  ? '0 8px 32px rgba(0, 0, 0, 0.12)'
+                  : theme === 'glass'
+                    ? '0 8px 32px rgba(0, 0, 0, 0.08)'
+                    : '0 1px 3px rgba(0, 0, 0, 0.12)',
             ...(theme === 'glass' && !config?.branding?.backgroundImageUrl ? getGlassStyle(0.7) : {}),
             background: config?.branding?.backgroundImageUrl
               ? `url(${config.branding.backgroundImageUrl})`
-              : theme !== 'glass' 
+              : theme !== 'glass'
                 ? (config?.branding?.chatWindowBgColor || '#ffffff')
                 : undefined,
             backgroundSize: 'cover',
@@ -866,16 +866,16 @@ export default function WidgetEmbed() {
           {!userDetailsProvided ? (
             <div className="flex flex-col h-full">
               {/* Header for pre-chat */}
-              <div 
+              <div
                 className="px-4 py-3 flex items-center justify-between relative overflow-hidden"
                 style={getHeaderStyle()}
                 data-testid="prechat-header"
               >
                 <div className="flex items-center gap-2">
                   {logoUrl && (
-                    <img 
-                      src={logoUrl} 
-                      alt={companyName} 
+                    <img
+                      src={logoUrl}
+                      alt={companyName}
                       className="h-6 w-6 object-contain filter brightness-0 invert"
                     />
                   )}
@@ -903,18 +903,18 @@ export default function WidgetEmbed() {
                 </div>
                 {theme === 'wave' && <WavePattern color="white" opacity={0.1} />}
               </div>
-              
+
               {/* Pre-chat form content */}
               <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
                 <div className="w-full max-w-sm space-y-4">
                   {/* Icon and welcome message */}
                   <div className="text-center space-y-2">
-                    <div 
+                    <div
                       className="w-16 h-16 rounded-full mx-auto flex items-center justify-center"
                       style={{ backgroundColor: `${config?.branding?.primaryColor || '#3B82F6'}20` }}
                     >
-                      <MessageCircle 
-                        className="w-8 h-8" 
+                      <MessageCircle
+                        className="w-8 h-8"
                         style={{ color: config?.branding?.primaryColor || '#3B82F6' }}
                       />
                     </div>
@@ -925,7 +925,7 @@ export default function WidgetEmbed() {
                       {t.provideDetails}
                     </p>
                   </div>
-                  
+
                   {/* Form */}
                   <form onSubmit={handlePreChatSubmit} className="space-y-3">
                     <div>
@@ -952,13 +952,13 @@ export default function WidgetEmbed() {
                         required
                       />
                     </div>
-                    
+
                     {preChatError && (
                       <p className="text-sm text-red-500" data-testid="text-prechat-error">
                         {preChatError}
                       </p>
                     )}
-                    
+
                     <Button
                       type="submit"
                       className="w-full text-white"
@@ -982,269 +982,269 @@ export default function WidgetEmbed() {
           ) : (
             // Original chat interface
             <>
-          {/* Header */}
-          <div
-            className="relative flex items-center justify-between p-4 text-white rounded-t-lg cursor-pointer overflow-hidden"
-            style={getHeaderStyle()}
-            onClick={() => setIsMinimized(!isMinimized)}
-          >
-            {(theme === 'wave' || theme === 'modern') && !isMinimized && (
-              <WavePattern color={theme === 'wave' ? secondaryColor : primaryColor} opacity={0.3} />
-            )}
-            
-            <div className="flex items-center gap-3 relative z-10">
-              {logoUrl ? (
-                <img src={logoUrl} alt={companyName} className="w-12 h-12 rounded-full bg-white/20" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5" />
-                </div>
-              )}
-              <div>
-                <h3 className="font-semibold">
-                  {companyName}
-                </h3>
-                {!isMinimized && (
-                  <div className="flex items-center gap-1 text-xs opacity-90">
-                    {isBusinessOpen() ? (
-                      <>
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                        <span>Online</span>
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="w-3 h-3" />
-                        <span>Offline</span>
-                      </>
-                    )}
-                  </div>
+              {/* Header */}
+              <div
+                className="relative flex items-center justify-between p-4 text-white rounded-t-lg cursor-pointer overflow-hidden"
+                style={getHeaderStyle()}
+                onClick={() => setIsMinimized(!isMinimized)}
+              >
+                {(theme === 'wave' || theme === 'modern') && !isMinimized && (
+                  <WavePattern color={theme === 'wave' ? secondaryColor : primaryColor} opacity={0.3} />
                 )}
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 relative z-10">
-              {!isMinimized && config?.widgetSettings?.enableLanguageSwitcher && config?.widgetSettings?.supportedLanguages && (
-                <div onClick={(e) => e.stopPropagation()}>
-                  <LanguageSwitcher
-                    languages={config.widgetSettings.supportedLanguages}
-                    currentLanguage={currentLanguage}
-                    onLanguageChange={handleLanguageChange}
-                    primaryColor="#FFFFFF"
-                    compact
-                  />
-                </div>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMinimized(!isMinimized);
-                }}
-                className="text-white hover:bg-white/20 p-1"
-              >
-                <ChevronDown className={cn("w-4 h-4 transition-transform", isMinimized && "rotate-180")} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsWidgetOpen(false);
-                }}
-                className="text-white hover:bg-white/20 p-1"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {!isMinimized && (
-            <>
-              {/* Business Hours Notice - only show if business hours are enabled */}
-              {config?.businessHours?.enabled && !isBusinessOpen() && (
-                <div className="px-4 py-2 bg-orange-50 text-orange-600 text-sm text-center">
-                  {config?.businessHours?.offlineMessage || "We're currently closed."}
-                </div>
-              )}
-              
-              {/* Messages */}
-              <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.map((message, index) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        "message-enter",
-                        message.role === "user" ? "text-right message-user" : "text-left message-bot"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "inline-block max-w-[80%] p-3 rounded-2xl transition-all duration-300",
-                          "hover:scale-[1.02] hover:shadow-lg"
-                        )}
-                        style={{
-                          ...getMessageStyle(message.role === "user"),
-                          ...(theme === 'glass' && message.role !== "user" ? getGlassStyle(0.8) : {}),
-                          borderRadius: theme === 'sleek' ? '8px' : theme === 'minimal' ? '6px' : theme === 'soft' ? '16px' : '18px',
-                        }}
-                        data-testid={`message-${message.role}-${index}`}
-                      >
-                        <MarkdownMessage content={message.content} className="text-sm" />
-                        {/* Response Options */}
-                        {message.responseOptions && message.responseOptions.length > 0 && (
-                          <div className="mt-3 space-y-2 stagger-enter">
-                            {message.responseOptions.map((option, optionIndex) => (
-                              <Button
-                                key={optionIndex}
-                                variant="outline"
-                                size="sm"
-                                className={cn(
-                                  "w-full justify-start text-left widget-button",
-                                  "transition-all duration-300 hover:scale-[1.02]"
-                                )}
-                                style={{
-                                  ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
-                                  animationDelay: `${optionIndex * 0.1}s`,
-                                  borderColor: primaryColor,
-                                  color: primaryColor,
-                                }}
-                                onClick={() => handleResponseOption(option, message.id)}
-                                data-testid={`button-response-option-${optionIndex}`}
-                              >
-                                {option}
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Links */}
-                        {message.links && message.links.length > 0 && (
-                          <div className="mt-3 space-y-2 stagger-enter">
-                            {message.links.map((link, linkIndex) => (
-                              <Button
-                                key={linkIndex}
-                                variant="outline"
-                                size="sm"
-                                className={cn(
-                                  "w-full justify-start text-left widget-button",
-                                  "transition-all duration-300 hover:scale-[1.02]"
-                                )}
-                                style={{
-                                  ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
-                                  animationDelay: `${linkIndex * 0.1}s`,
-                                  borderColor: primaryColor,
-                                  color: primaryColor,
-                                }}
-                                onClick={() => window.open(link.url, '_blank')}
-                                data-testid={`button-link-${linkIndex}`}
-                              >
-                                🔗 {link.title}
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {/* Lead Capture Form */}
-                  {showLeadForm && !leadCaptured && (
-                    <LeadCaptureForm
-                      config={config}
-                      onSubmit={handleLeadFormSubmit}
-                      onCancel={handleLeadFormCancel}
-                      existingInfo={capturedLeadInfo}
-                    />
-                  )}
-                  
-                  {/* Typing Indicator */}
-                  {showTyping && (
-                    <div className="text-left message-enter">
-                      <div 
-                        className={cn(
-                          "inline-block p-3 rounded-2xl",
-                          theme !== 'glass' && "bg-gray-100"
-                        )}
-                        style={theme === 'glass' ? getGlassStyle(0.7) : undefined}
-                      >
-                        <TypingIndicator primaryColor={config?.branding?.thinkingDotsColor || primaryColor} />
-                      </div>
+
+                <div className="flex items-center gap-3 relative z-10">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt={companyName} className="w-12 h-12 rounded-full bg-white/20" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                      <MessageCircle className="w-5 h-5" />
                     </div>
                   )}
-                </div>
-              </ScrollArea>
-              
-              {/* Suggested Prompts */}
-              {messages.length === 1 && config?.behavior?.suggestedPrompts && config.behavior.suggestedPrompts.length > 0 && (
-                <div className="px-4 pb-2">
-                  <div className="flex flex-wrap gap-2 stagger-enter">
-                    {config.behavior.suggestedPrompts.map((prompt, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSuggestedPrompt(prompt)}
-                        className={cn(
-                          "text-xs widget-button transition-all duration-300"
+                  <div>
+                    <h3 className="font-semibold">
+                      {companyName}
+                    </h3>
+                    {!isMinimized && (
+                      <div className="flex items-center gap-1 text-xs opacity-90">
+                        {isBusinessOpen() ? (
+                          <>
+                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                            <span>Online</span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3 h-3" />
+                            <span>Offline</span>
+                          </>
                         )}
-                        style={{
-                          ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
-                          animationDelay: `${index * 0.1}s`,
-                          borderColor: primaryColor,
-                          color: primaryColor,
-                        }}
-                        data-testid={`button-suggested-prompt-${index}`}
-                      >
-                        {prompt}
-                      </Button>
-                    ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-              
-              {/* Input area */}
-              <div 
-                className="p-4 border-t"
-                style={theme === 'glass' ? getGlassStyle(0.5) : undefined}
-              >
-                <div className="flex gap-2">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder={isBusinessOpen() ? t.typeMessage : t.leaveMessage}
-                    disabled={isLoading}
-                    className={cn(
-                      "flex-1 transition-all duration-300",
-                      "focus:scale-[1.02] focus:shadow-lg",
-                      theme === 'glass' && "bg-white/50 backdrop-blur-sm text-gray-900 placeholder:text-gray-500",
-                      theme === 'minimal' && "border-black rounded-none"
-                    )}
-                    data-testid="input-message"
-                  />
+
+                <div className="flex items-center gap-2 relative z-10">
+                  {!isMinimized && config?.widgetSettings?.enableLanguageSwitcher && config?.widgetSettings?.supportedLanguages && (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <LanguageSwitcher
+                        languages={config.widgetSettings.supportedLanguages}
+                        currentLanguage={currentLanguage}
+                        onLanguageChange={handleLanguageChange}
+                        primaryColor="#FFFFFF"
+                        compact
+                      />
+                    </div>
+                  )}
                   <Button
-                    onClick={() => sendMessage()}
-                    disabled={isLoading || !inputMessage.trim()}
+                    variant="ghost"
                     size="sm"
-                    className="widget-button"
-                    style={{
-                      backgroundColor: config?.branding?.sendButtonColor || primaryColor,
-                      borderRadius: theme === 'sleek' ? '6px' : theme === 'minimal' ? '4px' : '8px',
-                      boxShadow: theme === 'elevated' ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMinimized(!isMinimized);
                     }}
-                    data-testid="button-send"
-                    title={t.send}
+                    className="text-white hover:bg-white/20 p-1"
                   >
-                    <Send className="w-4 h-4" />
+                    <ChevronDown className={cn("w-4 h-4 transition-transform", isMinimized && "rotate-180")} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsWidgetOpen(false);
+                    }}
+                    className="text-white hover:bg-white/20 p-1"
+                  >
+                    <X className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
+
+              {!isMinimized && (
+                <>
+                  {/* Business Hours Notice - only show if business hours are enabled */}
+                  {config?.businessHours?.enabled && !isBusinessOpen() && (
+                    <div className="px-4 py-2 bg-orange-50 text-orange-600 text-sm text-center">
+                      {config?.businessHours?.offlineMessage || "We're currently closed."}
+                    </div>
+                  )}
+
+                  {/* Messages */}
+                  <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+                    <div className="space-y-4">
+                      {messages.map((message, index) => (
+                        <div
+                          key={message.id}
+                          className={cn(
+                            "message-enter",
+                            message.role === "user" ? "text-right message-user" : "text-left message-bot"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "inline-block max-w-[80%] p-3 rounded-2xl transition-all duration-300",
+                              "hover:scale-[1.02] hover:shadow-lg"
+                            )}
+                            style={{
+                              ...getMessageStyle(message.role === "user"),
+                              ...(theme === 'glass' && message.role !== "user" ? getGlassStyle(0.8) : {}),
+                              borderRadius: theme === 'sleek' ? '8px' : theme === 'minimal' ? '6px' : theme === 'soft' ? '16px' : '18px',
+                            }}
+                            data-testid={`message-${message.role}-${index}`}
+                          >
+                            <MarkdownMessage content={message.content} className="text-sm" />
+                            {/* Response Options */}
+                            {message.responseOptions && message.responseOptions.length > 0 && (
+                              <div className="mt-3 space-y-2 stagger-enter">
+                                {message.responseOptions.map((option, optionIndex) => (
+                                  <Button
+                                    key={optionIndex}
+                                    variant="outline"
+                                    size="sm"
+                                    className={cn(
+                                      "w-full justify-start text-left widget-button",
+                                      "transition-all duration-300 hover:scale-[1.02]"
+                                    )}
+                                    style={{
+                                      ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
+                                      animationDelay: `${optionIndex * 0.1}s`,
+                                      borderColor: primaryColor,
+                                      color: primaryColor,
+                                    }}
+                                    onClick={() => handleResponseOption(option, message.id)}
+                                    data-testid={`button-response-option-${optionIndex}`}
+                                  >
+                                    {option}
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Links */}
+                            {message.links && message.links.length > 0 && (
+                              <div className="mt-3 space-y-2 stagger-enter">
+                                {message.links.map((link, linkIndex) => (
+                                  <Button
+                                    key={linkIndex}
+                                    variant="outline"
+                                    size="sm"
+                                    className={cn(
+                                      "w-full justify-start text-left widget-button",
+                                      "transition-all duration-300 hover:scale-[1.02]"
+                                    )}
+                                    style={{
+                                      ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
+                                      animationDelay: `${linkIndex * 0.1}s`,
+                                      borderColor: primaryColor,
+                                      color: primaryColor,
+                                    }}
+                                    onClick={() => window.open(link.url, '_blank')}
+                                    data-testid={`button-link-${linkIndex}`}
+                                  >
+                                    🔗 {link.title}
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Lead Capture Form */}
+                      {showLeadForm && !leadCaptured && (
+                        <LeadCaptureForm
+                          config={config}
+                          onSubmit={handleLeadFormSubmit}
+                          onCancel={handleLeadFormCancel}
+                          existingInfo={capturedLeadInfo}
+                        />
+                      )}
+
+                      {/* Typing Indicator */}
+                      {showTyping && (
+                        <div className="text-left message-enter">
+                          <div
+                            className={cn(
+                              "inline-block p-3 rounded-2xl",
+                              theme !== 'glass' && "bg-gray-100"
+                            )}
+                            style={theme === 'glass' ? getGlassStyle(0.7) : undefined}
+                          >
+                            <TypingIndicator primaryColor={config?.branding?.thinkingDotsColor || primaryColor} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+
+                  {/* Suggested Prompts */}
+                  {messages.length === 1 && config?.behavior?.suggestedPrompts && config.behavior.suggestedPrompts.length > 0 && (
+                    <div className="px-4 pb-2">
+                      <div className="flex flex-wrap gap-2 stagger-enter">
+                        {config.behavior.suggestedPrompts.map((prompt, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSuggestedPrompt(prompt)}
+                            className={cn(
+                              "text-xs widget-button transition-all duration-300"
+                            )}
+                            style={{
+                              ...(theme === 'glass' ? getGlassStyle(0.6) : {}),
+                              animationDelay: `${index * 0.1}s`,
+                              borderColor: primaryColor,
+                              color: primaryColor,
+                            }}
+                            data-testid={`button-suggested-prompt-${index}`}
+                          >
+                            {prompt}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Input area */}
+                  <div
+                    className="p-4 border-t"
+                    style={theme === 'glass' ? getGlassStyle(0.5) : undefined}
+                  >
+                    <div className="flex gap-2">
+                      <Input
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder={isBusinessOpen() ? t.typeMessage : t.leaveMessage}
+                        disabled={isLoading}
+                        className={cn(
+                          "flex-1 transition-all duration-300",
+                          "focus:scale-[1.02] focus:shadow-lg",
+                          theme === 'glass' && "bg-white/50 backdrop-blur-sm text-gray-900 placeholder:text-gray-500",
+                          theme === 'minimal' && "border-black rounded-none"
+                        )}
+                        data-testid="input-message"
+                      />
+                      <Button
+                        onClick={() => sendMessage()}
+                        disabled={isLoading || !inputMessage.trim()}
+                        size="sm"
+                        className="widget-button"
+                        style={{
+                          backgroundColor: config?.branding?.sendButtonColor || primaryColor,
+                          borderRadius: theme === 'sleek' ? '6px' : theme === 'minimal' ? '4px' : '8px',
+                          boxShadow: theme === 'elevated' ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
+                        }}
+                        data-testid="button-send"
+                        title={t.send}
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           )}
-          </>
-        )}
         </Card>
       )}
     </>

@@ -32,16 +32,16 @@ app.use((req, res, next) => {
     'https://automiqa-chat-bot-ve-3z7o.vercel.app',
     'http://automiqa-chat-bot-ve-3z7o.vercel.app'
   ];
-  
+
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
   res.header('Access-Control-Expose-Headers', 'Set-Cookie');
-  
+
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -85,8 +85,8 @@ app.use((req, res, next) => {
 export async function setupApp() {
   // Health check endpoint (no auth required)
   app.get("/api/health", (_req, res) => {
-    res.status(200).json({ 
-      status: "ok", 
+    res.status(200).json({
+      status: "ok",
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || "development"
     });
@@ -99,6 +99,7 @@ export async function setupApp() {
   app.use("/api", chatbotsRoutes);
   app.use("/api", subscriptionRoutes);
   app.use("/api", widgetRoutes);
+  app.use("/", widgetRoutes); // Also register at root for public widget access
   app.use("/api", paymentRoutes);
   app.use("/api", clientDashboardRoutes);
   app.use("/api", knowledgeBaseRoutes);

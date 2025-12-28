@@ -16,40 +16,35 @@ interface EmbedCodeModalProps {
 export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCodeModalProps) {
   const { toast } = useToast();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  
+
   if (!chatbot) return null;
-  
+
   const config = chatbot.config as any;
   const mode = config?.widgetSettings?.mode || "floating";
   const baseUrl = window.location.origin;
-  
+
   // Generate floating widget embed code
-  const floatingEmbedCode = `<!-- Chat Widget - Floating -->
-<script>
-  (function() {
-    const script = document.createElement('script');
-    script.src = '${baseUrl}/widget-embed.js';
-    script.setAttribute('data-chatbot-id', '${chatbot.id}');
-    script.setAttribute('data-mode', 'floating');
-    script.async = true;
-    document.body.appendChild(script);
-  })();
+  const floatingEmbedCode = `<!-- Automiqa Chat Widget - Floating -->
+<script 
+  src="${baseUrl}/widget-embed.js" 
+  data-chatbot-id="${chatbot.id}"
+  async>
 </script>`;
-  
+
   // Generate fullpage embed code
-  const fullpageEmbedCode = `<!-- Chat Widget - Fullpage -->
+  const fullpageEmbedCode = `<!-- Automiqa Chat Widget - Fullpage -->
 <iframe
-  src="${baseUrl}/widget/${chatbot.id}"
+  src="${baseUrl}/widget/${chatbot.id}/fullpage"
   width="100%"
   height="600"
   frameborder="0"
   style="border: 1px solid #e5e7eb; border-radius: 8px;"
   title="${chatbot.name} Chat"
 ></iframe>`;
-  
+
   // Generate direct link
-  const fullpageLink = `${baseUrl}/widget/${chatbot.id}`;
-  
+  const fullpageLink = `${baseUrl}/widget/${chatbot.id}/fullpage`;
+
   const copyToClipboard = async (code: string, codeId: string) => {
     try {
       await navigator.clipboard.writeText(code);
@@ -67,14 +62,14 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
       });
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Embed Code for {chatbot.name}</DialogTitle>
         </DialogHeader>
-        
+
         <Tabs defaultValue={mode === "fullpage" ? "fullpage" : "floating"} className="mt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="floating" data-testid="tab-floating">
@@ -86,7 +81,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
               Fullpage
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="floating" className="mt-4 space-y-4">
             <Card>
               <CardHeader>
@@ -106,7 +101,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
                       <li>Widget position can be configured in the chatbot settings</li>
                     </ol>
                   </div>
-                  
+
                   <div className="relative">
                     <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
                       <code>{floatingEmbedCode}</code>
@@ -131,7 +126,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
                       )}
                     </Button>
                   </div>
-                  
+
                   <div className="text-xs text-muted-foreground">
                     <strong>Note:</strong> The floating widget will respect your configured settings including position, colors, and auto-open behavior.
                   </div>
@@ -139,7 +134,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="fullpage" className="mt-4 space-y-4">
             <Card>
               <CardHeader>
@@ -180,7 +175,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-medium mb-2">Option 2: Direct Link</h4>
                     <p className="text-sm text-muted-foreground mb-2">
@@ -211,7 +206,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 mt-4">
                     <Button
                       variant="outline"
@@ -222,7 +217,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
                       Preview Fullpage Chat
                     </Button>
                   </div>
-                  
+
                   <div className="text-xs text-muted-foreground">
                     <strong>Customization:</strong> You can adjust the iframe width and height to fit your design. The chat interface is responsive and will adapt to the container size.
                   </div>
@@ -231,7 +226,7 @@ export default function EmbedCodeModal({ chatbot, open, onOpenChange }: EmbedCod
             </Card>
           </TabsContent>
         </Tabs>
-        
+
         <div className="mt-4 p-4 bg-muted rounded-lg">
           <h4 className="text-sm font-medium mb-2">Current Configuration</h4>
           <div className="text-xs space-y-1">
