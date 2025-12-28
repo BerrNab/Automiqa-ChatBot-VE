@@ -2,7 +2,34 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "headers": [
+    {
+      "source": "/widget-embed.js",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

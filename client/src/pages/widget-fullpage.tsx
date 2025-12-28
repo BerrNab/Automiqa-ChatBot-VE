@@ -125,6 +125,9 @@ export default function WidgetFullpage() {
   // Get translations for current language
   const t = getTranslations(currentLanguage);
 
+  const primaryColor = config?.branding?.primaryColor || "#3B82F6";
+  const secondaryColor = config?.branding?.secondaryColor || "#10B981";
+
   // Get theme-specific classes
   const getThemeClasses = () => {
     switch (theme) {
@@ -168,19 +171,31 @@ export default function WidgetFullpage() {
   };
 
   const getContainerStyle = (): React.CSSProperties => {
-    if (theme === 'glass') {
-      return getGlassStyle(0.7);
-    } else if (theme === 'gradient') {
+    const style: React.CSSProperties = {
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    };
+
+    if (config?.branding?.backgroundImageUrl) {
       return {
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      };
-    } else if (theme === 'minimal') {
-      return {
-        background: '#ffffff',
+        ...style,
+        background: `url("${config.branding.backgroundImageUrl}") center/cover no-repeat`
       };
     }
+
+    if (theme === 'glass') {
+      return { ...style, ...getGlassStyle(0.7) };
+    } else if (theme === 'gradient') {
+      return {
+        ...style,
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      };
+    }
+
     return {
-      background: '#ffffff',
+      ...style,
+      background: config?.branding?.chatWindowBgColor || '#ffffff',
     };
   };
 
@@ -554,8 +569,6 @@ export default function WidgetFullpage() {
     );
   }
 
-  const primaryColor = config?.branding?.primaryColor || "#3B82F6";
-  const secondaryColor = config?.branding?.secondaryColor || "#10B981";
   const logoUrl = config?.branding?.logoUrl;
   const companyName = config?.branding?.companyName || chatbot.client.name;
 
